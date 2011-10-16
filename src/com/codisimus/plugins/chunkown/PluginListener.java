@@ -34,7 +34,7 @@ public class PluginListener extends ServerListener {
         if (!ChunkOwn.pm.isPluginEnabled("PermissionsEx"))
             return;
 
-        //Return if OP permissions will be used
+        //Return if BukkitPermissions will be used
         if (useBP)
             return;
 

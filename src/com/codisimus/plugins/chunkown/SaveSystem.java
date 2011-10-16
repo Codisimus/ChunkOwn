@@ -47,11 +47,11 @@ class SaveSystem {
 
                 //Convert the coOwners data into a LinkedList for the OwnedChunk
                 if (!data[4].equals("none")) 
-                    ownedChunk.coOwners = new LinkedList<String>(Arrays.asList(data[4].split(";")));
+                    ownedChunk.coOwners = new LinkedList<String>(Arrays.asList(data[4].split(",")));
 
                 //Convert the groups data into a LinkedList for the OwnedChunk
                 if (!data[5].equals("none")) 
-                    ownedChunk.groups = new LinkedList<String>(Arrays.asList(data[5].split(";")));
+                    ownedChunk.groups = new LinkedList<String>(Arrays.asList(data[5].split(",")));
             }
         }
         catch (Exception loadFailed) {
