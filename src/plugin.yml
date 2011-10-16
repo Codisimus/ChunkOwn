@@ -1,0 +1,33 @@
+name: ChunkOwn
+main: com.codisimus.plugins.chunkown.ChunkOwn
+version: 0.0.1
+author: Codisimus
+website: www.codisimus.com
+description: Simple area protection based on Chunks
+startup: postworld
+commands:
+  chunk:
+    description: Used to own the current Chunk that you are in
+    usage: /<command> help
+permissions:
+  chunkown.own:
+    default: true
+    description: Needed to manage owned Chunks (/chunk buy, /chunk sell, /chunk list, /chunk clear)
+  chunkown.info:
+    default: true
+    description: Needed to see who the owner and CoOwners are of the current Chunk (/chunk info)
+  chunkown.coowner:
+    default: true
+    description: Needed to add a CoOwner to your Chunk (/chunk coowner)
+  chunkown.free:
+    default: op
+    description: Own Chunks free of charge
+  chunkown.admin:
+    default: op
+    description: Edit other Players' Chunks
+  chunkown.mustowntobuild:
+    default: false
+    description: Restricts Players from building anywhere they don't own that is above the OwnLowerLimit level
+  chunkown.limit.-1:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
