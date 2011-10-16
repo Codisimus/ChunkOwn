@@ -9,7 +9,6 @@ import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Holds ChunkOwn data and is used to load/save data
@@ -116,8 +115,8 @@ class SaveSystem {
      * @return The OwnedChunk object for the given Chunk
      */
     public static OwnedChunk getOwnedChunk(String world, int x, int z) {
-        int row = x % 100;
-        int column = z % 100;
+        int row = Math.abs(x % 100);
+        int column = Math.abs(z % 100);
         
         LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[row][column];
         
@@ -145,7 +144,7 @@ class SaveSystem {
      * @return The OwnedChunk object for the given Chunk
      */
     public static OwnedChunk findOwnedChunk(String world, int x, int z) {
-        LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[x % 100][z % 100];
+        LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[Math.abs(x % 100)][Math.abs(z % 100)];
         
         if (chunkList == null)
             return null;
@@ -164,8 +163,8 @@ class SaveSystem {
      * @param z The z-coordinate of the OwnedChunk
      */
     public static void removeOwnedChunk(String world, int x, int z) {
-        int row = x % 100;
-        int column = z % 100;
+        int row = Math.abs(x % 100);
+        int column = Math.abs(z % 100);
         
         LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[row][column];
         
@@ -184,6 +183,4 @@ class SaveSystem {
         
         save();
     }
-    
-    
 }
