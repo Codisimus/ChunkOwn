@@ -1,6 +1,6 @@
+package com.codisimus.plugins.chunkown.listeners;
 
-package com.codisimus.plugins.chunkown;
-
+import com.codisimus.plugins.chunkown.ChunkOwn;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerListener;
@@ -8,9 +8,9 @@ import org.bukkit.event.player.PlayerListener;
 /**
  * Listens for commands and griefing events
  * 
- * @author Cody
+ * @author Codisimus
  */
-public class ChunkOwnPlayerListener extends PlayerListener {
+public class playerListener extends PlayerListener {
 
     @Override
     public void onPlayerBucketEmpty (PlayerBucketEmptyEvent event) {

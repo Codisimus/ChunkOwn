@@ -1,15 +1,15 @@
+package com.codisimus.plugins.chunkown.listeners;
 
-package com.codisimus.plugins.chunkown;
-
+import com.codisimus.plugins.chunkown.ChunkOwn;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.painting.PaintingPlaceEvent;
 
 /**
  * Listens for griefing events
  * 
- * @author Cody
+ * @author Codisimus
  */
-public class ChunkOwnEntityListener extends EntityListener {
+public class entityListener extends EntityListener {
 
     @Override
     public void onPaintingPlace (PaintingPlaceEvent event) {

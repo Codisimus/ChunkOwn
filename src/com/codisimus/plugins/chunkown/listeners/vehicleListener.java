@@ -1,6 +1,6 @@
+package com.codisimus.plugins.chunkown.listeners;
 
-package com.codisimus.plugins.chunkown;
-
+import com.codisimus.plugins.chunkown.ChunkOwn;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
@@ -10,9 +10,9 @@ import org.bukkit.event.vehicle.VehicleListener;
 /**
  * Listens for griefing events
  * 
- * @author Cody
+ * @author Codisimus
  */
-public class ChunkOwnVehicleListener extends VehicleListener {
+public class vehicleListener extends VehicleListener {
 
     @Override
     public void onVehicleDamage (VehicleDamageEvent event) {

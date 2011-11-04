@@ -1,6 +1,7 @@
+package com.codisimus.plugins.chunkown.listeners;
 
-package com.codisimus.plugins.chunkown;
-
+import com.codisimus.plugins.chunkown.ChunkOwn;
+import com.codisimus.plugins.chunkown.Register;
 import org.bukkit.event.server.ServerListener;
 import com.codisimus.plugins.chunkown.register.payment.Methods;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -11,8 +12,7 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
  * 
  * @author Codisimus
  */
-public class PluginListener extends ServerListener {
-    public PluginListener() { }
+public class pluginListener extends ServerListener {
     public static boolean useBP;
 
     @Override

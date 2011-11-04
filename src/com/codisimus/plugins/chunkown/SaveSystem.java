@@ -1,4 +1,3 @@
-
 package com.codisimus.plugins.chunkown;
 
 import java.io.BufferedReader;
@@ -13,9 +12,9 @@ import java.util.LinkedList;
 /**
  * Holds ChunkOwn data and is used to load/save data
  * 
- * @author Cody
+ * @author Codisimus
  */
-class SaveSystem {
+public class SaveSystem {
     public static Object[][] matrix = new Object[100][100];
     public static HashMap chunkCounter = new HashMap();
     
@@ -67,7 +66,8 @@ class SaveSystem {
         try {
             //Open save file for writing data
             BufferedWriter bWriter = new BufferedWriter(new FileWriter("plugins/ChunkOwn/chunkown.save"));
-
+            
+            //Iterate through all OwnedChunks to write each to the file
             for (int i=0; i<100; i++)
                 for (int j=0; j<100; j++) {
                     LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[i][j];
@@ -118,17 +118,21 @@ class SaveSystem {
         int row = Math.abs(x % 100);
         int column = Math.abs(z % 100);
         
+        //Fetch the ChunkList from the Matrix
         LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[row][column];
         
+        //If the ChunkList doesn't exist, create it
         if (chunkList == null) {
             chunkList = new LinkedList<OwnedChunk>();
             matrix[row][column] = chunkList;
         }
         
+        //Iterate through the ChunkList to find the OwnedChunk that matches the Location data
         for (OwnedChunk tempChunk: chunkList)
             if (tempChunk.x == x && tempChunk.z == z && tempChunk.world.equals(world))
                 return tempChunk;
         
+        //Create the OwnedChunk because it does not exist
         OwnedChunk ownedChunk = new OwnedChunk(world, x, z);
         chunkList.add(ownedChunk);
         return ownedChunk;
@@ -144,15 +148,20 @@ class SaveSystem {
      * @return The OwnedChunk object for the given Chunk
      */
     public static OwnedChunk findOwnedChunk(String world, int x, int z) {
+        //Retrieve chunkList that the OwnedChunk would be in
         LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[Math.abs(x % 100)][Math.abs(z % 100)];
         
+        //Return null if the chunkList does not exist
         if (chunkList == null)
             return null;
         
+        //Iterate through the ChunkList to find the OwnedChunk that matches the Location data
         for (OwnedChunk ownedChunk: chunkList)
             if (ownedChunk.x == x && ownedChunk.z == z && ownedChunk.world.equals(world))
                 return ownedChunk;
-       return null;
+        
+        //Return null because the OwnedChunk does not exist
+        return null;
     }
     
     /**
@@ -163,21 +172,28 @@ class SaveSystem {
      * @param z The z-coordinate of the OwnedChunk
      */
     public static void removeOwnedChunk(String world, int x, int z) {
+        //Retrieve chunkList that the OwnedChunk would be in
         int row = Math.abs(x % 100);
         int column = Math.abs(z % 100);
-        
         LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[row][column];
         
+        //Cancel if the chunkList does not exist
         if (chunkList == null)
             return;
         
+        //Iterate through the ChunkList to find the OwnedChunk that matches the Location data
         for (OwnedChunk ownedChunk: chunkList)
             if (ownedChunk.x == x && ownedChunk.z == z && ownedChunk.world.equals(world)) {
+                //Decrement the chunkCounter of the owner if there is one
+                if (ownedChunk.owner != null)
+                    chunkCounter.put(ownedChunk.owner, (Integer)chunkCounter.get(ownedChunk.owner) - 1);
+                
+                //Remove the OwnedChunk when it is found
                 chunkList.remove(ownedChunk);
-                chunkCounter.put(ownedChunk.owner, (Integer)chunkCounter.get(ownedChunk.owner) - 1);
                 break;
             }
         
+        //Delete the chunkjList if it is now empty
         if (chunkList.isEmpty())
             matrix[row][column] = null;
         

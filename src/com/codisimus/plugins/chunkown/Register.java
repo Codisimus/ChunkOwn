@@ -1,4 +1,3 @@
-
 package com.codisimus.plugins.chunkown;
 
 import com.codisimus.plugins.chunkown.register.payment.Method;

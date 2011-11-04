@@ -1,6 +1,11 @@
-
 package com.codisimus.plugins.chunkown;
 
+import com.codisimus.plugins.chunkown.listeners.commandListener;
+import com.codisimus.plugins.chunkown.listeners.pluginListener;
+import com.codisimus.plugins.chunkown.listeners.vehicleListener;
+import com.codisimus.plugins.chunkown.listeners.playerListener;
+import com.codisimus.plugins.chunkown.listeners.entityListener;
+import com.codisimus.plugins.chunkown.listeners.blockListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -14,10 +19,7 @@ import java.util.zip.ZipEntry;
 import org.bukkit.Chunk;
 import org.bukkit.Server;
 import org.bukkit.block.Block;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.PluginManager;
@@ -27,7 +29,7 @@ import ru.tehkode.permissions.PermissionManager;
 /**
  * Loads Plugin and manages Permissions
  * 
- * @author Cody
+ * @author Codisimus
  */
 public class ChunkOwn extends JavaPlugin {
     public static Server server;
@@ -49,7 +51,7 @@ public class ChunkOwn extends JavaPlugin {
         loadConfig();
         SaveSystem.load();
         registerEvents();
-        //registerCommands();
+        getCommand("chunk").setExecutor(new commandListener());
         System.out.println("ChunkOwn "+this.getDescription().getVersion()+" is enabled!");
     }
     
@@ -71,12 +73,17 @@ public class ChunkOwn extends JavaPlugin {
      */
     public void moveFile(String fileName) {
         try {
+            //Retrieve file from this plugin's .jar
             JarFile jar = new JarFile("plugins/ChunkOwn.jar");
             ZipEntry entry = jar.getEntry(fileName);
+            
+            //Create the destination folder if it does not exist
             String destination = "plugins/ChunkOwn/";
             File file = new File(destination.substring(0, destination.length()-1));
             if (!file.exists())
                 file.mkdir();
+            
+            //Copy the file
             File efile = new File(destination, fileName);
             InputStream in = new BufferedInputStream(jar.getInputStream(entry));
             OutputStream out = new BufferedOutputStream(new FileOutputStream(efile));
@@ -111,15 +118,15 @@ public class ChunkOwn extends JavaPlugin {
         Register.economy = loadValue("Economy");
         Register.buyPrice = Double.parseDouble(loadValue("BuyPrice"));
         Register.sellPrice = Double.parseDouble(loadValue("SellPrice"));
-        PluginListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
-        ChunkCommand.cornerID = Integer.parseInt(loadValue("CornerBlockID"));
+        pluginListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
+        commandListener.cornerID = Integer.parseInt(loadValue("CornerBlockID"));
         lowerLimit = Integer.parseInt(loadValue("OwnLowerLimit"));
         doNotOwnMsg = format(loadValue("DoNotOwnMessage"));
-        ChunkCommand.permissionMsg = format(loadValue("PermissionMessage"));
-        ChunkCommand.claimedMsg = format(loadValue("AlreadyClaimedMessage"));
-        ChunkCommand.limitMsg = format(loadValue("LimitReachedMessage"));
-        ChunkCommand.unclaimedMsg = format(loadValue("UnclaimedMessage"));
-        ChunkCommand.buyFreeMsg = format(loadValue("BuyFreeMessage"));
+        commandListener.permissionMsg = format(loadValue("PermissionMessage"));
+        commandListener.claimedMsg = format(loadValue("AlreadyClaimedMessage"));
+        commandListener.limitMsg = format(loadValue("LimitReachedMessage"));
+        commandListener.unclaimedMsg = format(loadValue("UnclaimedMessage"));
+        commandListener.buyFreeMsg = format(loadValue("BuyFreeMessage"));
         Register.insufficientFundsMsg = format(loadValue("InsufficientFundsMessage"));
         Register.buyMsg = format(loadValue("BuyMessage"));
         Register.sellMsg = format(loadValue("SellMessage"));
@@ -144,17 +151,16 @@ public class ChunkOwn extends JavaPlugin {
      *
      */
     public void registerEvents() {
-        ChunkOwnPlayerListener playerListener = new ChunkOwnPlayerListener();
-        ChunkOwnBlockListener blockListener = new ChunkOwnBlockListener();
-        ChunkOwnEntityListener entityListener = new ChunkOwnEntityListener();
-        ChunkOwnVehicleListener vehicleListener = new ChunkOwnVehicleListener();
-        pm.registerEvent(Event.Type.PLUGIN_ENABLE, new PluginListener(), Priority.Monitor, this);
+        playerListener playerListener = new playerListener();
+        blockListener blockListener = new blockListener();
+        entityListener entityListener = new entityListener();
+        vehicleListener vehicleListener = new vehicleListener();
+        pm.registerEvent(Type.PLUGIN_ENABLE, new pluginListener(), Priority.Monitor, this);
         pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, playerListener, Priority.Highest, this);
         pm.registerEvent(Type.PLAYER_BUCKET_FILL, playerListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_DAMAGE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_IGNITE, blockListener, Priority.Highest, this);
-        pm.registerEvent(Type.BLOCK_PISTON_EXTEND, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_SPREAD, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.SIGN_CHANGE, blockListener, Priority.Highest, this);
@@ -168,10 +174,10 @@ public class ChunkOwn extends JavaPlugin {
      * 
      * @param player The Player who is being checked for permission
      * @param type The String of the permission, ex. admin
-     * @return True if the given player has the specific permission
+     * @return True if the given Player has the specific permission
      */
     public static boolean hasPermission(Player player, String type) {
-        //Check for node only if a Permission Plugin is present
+        //Check if a Permission Plugin is present
         if (permissions != null)
             return permissions.has(player, "chunkown."+type);
 
@@ -191,6 +197,7 @@ public class ChunkOwn extends JavaPlugin {
         if (permissions == null)
             return -1;
 
+        //Check for the unlimited node first
         if (hasPermission(player, "limit.-1"))
             return -1;
 
@@ -221,7 +228,7 @@ public class ChunkOwn extends JavaPlugin {
      * all events can be found in the ChunkOwn.registerEvents() method
      * 
      * @param player The Player who is trying to build
-     * @param block The Block the Player is modifying
+     * @param block The Block the playerListener is modifying
      * @return True if Player has permission to 'build'
      */
     public static boolean canBuild(Player player, Block block) {
@@ -263,54 +270,5 @@ public class ChunkOwn extends JavaPlugin {
             player.sendMessage(doNotOwnMsg);
             return false;
         }
-    }
-    
-    /**
-     * Listens for ChunkOwn commands to execute them
-     *
-     */
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-        if (!command.getName().equals("chunk"))
-            return true;
-        
-        if (!(sender instanceof Player))
-            return true;
-        Player player = (Player)sender;
-        
-        if (args.length == 0) {
-            ChunkCommand.sendHelp(player);
-            return true;
-        }
-
-        int commandID = 0;
-        if (args[0].equals("buy"))
-            commandID = 1;
-        else if (args[0].equals("sell"))
-            commandID = 2;
-        else if (args[0].equals("list"))
-            commandID = 3;
-        else if (args[0].equals("info"))
-            commandID = 4;
-        else if (args[0].equals("coowner"))
-            commandID = 5;
-        else if (args[0].equals("clear"))
-            commandID = 6;
-        
-        switch (commandID) {
-            case 1: ChunkCommand.buy(player); break;
-            case 2: ChunkCommand.sell(player); break;
-            case 3: ChunkCommand.list(player); break;
-            case 4: ChunkCommand.info(player); break;
-            case 5:
-                if (args.length < 4)
-                    ChunkCommand.sendHelp(player);
-                else
-                    ChunkCommand.coowner(player, args[2], args[1], args[3]);
-                break;
-            case 6: ChunkCommand.clear(player); break;
-            default: ChunkCommand.sendHelp(player); break;
-        }
-        return true;
     }
 }

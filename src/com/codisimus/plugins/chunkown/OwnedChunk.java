@@ -1,4 +1,3 @@
-
 package com.codisimus.plugins.chunkown;
 
 import java.util.LinkedList;
@@ -9,13 +8,13 @@ import org.bukkit.entity.Player;
  * An OwnedChunk has an Owner and any number of CoOwners/groups
  * The x-coordinate and z-coordinate together create a unique identifier
  *
- * @author Cody
+ * @author Codisimus
  */
 public class OwnedChunk {
     public String world;
     public int x;
     public int z;
-    public String owner = null;
+    public String owner;
     public LinkedList<String> coOwners = new LinkedList<String>();
     public LinkedList<String> groups = new LinkedList<String>();
 
