@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 
 /**
  * Manages payment for buying and selling Chunks
- * Using Nijikokun's Register API
+ * Uses Nijikokun's Register API
  * 
  * @author Codisimus
  */

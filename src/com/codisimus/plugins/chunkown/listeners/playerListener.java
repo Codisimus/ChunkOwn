@@ -12,12 +12,22 @@ import org.bukkit.event.player.PlayerListener;
  */
 public class playerListener extends PlayerListener {
 
+    /**
+     * Buckets can only be emptied within an OwnedChunk by the owner, a coowner, or an admin
+     * 
+     * @param event The PlayerBucketEmptyEvent that occurred
+     */
     @Override
     public void onPlayerBucketEmpty (PlayerBucketEmptyEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked().getRelative(event.getBlockFace())))
             event.setCancelled(true);
     }
 
+    /**
+     * Buckets can only be filled within an OwnedChunk by the owner, a coowner, or an admin
+     * 
+     * @param event The PlayerBucketFillEvent that occurred
+     */
     @Override
     public void onPlayerBucketFill (PlayerBucketFillEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked()))

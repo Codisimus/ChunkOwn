@@ -20,6 +20,7 @@ import org.bukkit.entity.Player;
  * @author Codisimus
  */
 public class commandListener implements CommandExecutor {
+    public static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR }
     public static int cornerID;
     public static String permissionMsg;
     public static String claimedMsg;
@@ -49,35 +50,26 @@ public class commandListener implements CommandExecutor {
             sendHelp(player);
             return true;
         }
-
-        //Set the ID of the command
-        int commandID = 0;
-        if (args[0].equals("buy"))
-            commandID = 1;
-        else if (args[0].equals("sell"))
-            commandID = 2;
-        else if (args[0].equals("list"))
-            commandID = 3;
-        else if (args[0].equals("info"))
-            commandID = 4;
-        else if (args[0].equals("coowner"))
-            commandID = 5;
-        else if (args[0].equals("clear"))
-            commandID = 6;
         
-        //Execute the command
-        switch (commandID) {
-            case 1: buy(player); return true;
-            case 2: sell(player); return true;
-            case 3: list(player); return true;
-            case 4: info(player); return true;
-            case 5:
+        //Execute the correct command
+        switch (Action.valueOf(args[0])) {
+            case BUY: buy(player); return true;
+                
+            case SELL: sell(player); return true;
+                
+            case LIST: list(player); return true;
+                
+            case INFO: info(player); return true;
+                
+            case COOWNER:
                 if (args.length == 4)
                     coowner(player, args[2], args[1], args[3]);
                 else
                     sendHelp(player);
                 return true;
-            case 6: clear(player); return true;
+                
+            case CLEAR: clear(player); return true;
+                
             default: sendHelp(player); return true;
         }
     }
@@ -143,7 +135,7 @@ public class commandListener implements CommandExecutor {
     }
     
     /**
-     * Removes ownership of the current Chunk to the Player
+     * Removes ownership of the current Chunk from the Player
      * 
      * @param player The Player selling the Chunk
      */
@@ -172,7 +164,7 @@ public class commandListener implements CommandExecutor {
     }
     
     /**
-     * Display to the Player all the Chunks that they own
+     * Display to the Player all of the Chunks that they own
      * 
      * @param player The Player requesting the list
      */
@@ -211,7 +203,7 @@ public class commandListener implements CommandExecutor {
     
     /**
      * Display to the Player the info of the current Chunk
-     * Info displayed is the Location of the Chunk and the current Chunk
+     * Info displayed is the Location of the Chunk and the current CoOwners
      * 
      * @param player The Player requesting the info
      */
@@ -290,6 +282,7 @@ public class commandListener implements CommandExecutor {
                     player.sendMessage(coOwner+" is already a CoOwner");
                     return;
                 }
+                
                 ownedChunk.coOwners.add(coOwner);
                 player.sendMessage(coOwner+" added as a CoOwner");
             }
@@ -306,6 +299,7 @@ public class commandListener implements CommandExecutor {
                     player.sendMessage(coOwner+" is already a CoOwner");
                     return;
                 }
+                
                 ownedChunk.groups.add(coOwner);
                 player.sendMessage(coOwner+" added as a CoOwner");
             }
@@ -361,29 +355,41 @@ public class commandListener implements CommandExecutor {
     }
     
     /**
-     * Places Blocks of given type just above the highest Block at each corner of the given Chunk
+     * Places Blocks of a predetermined type just above the highest Block at each corner of the given Chunk
      *
      * @param chunk The given Chunk
      */
     public static void markCorners(Chunk chunk) {
+        //Get the highest Block (should be empty) at the South-West corner
         Block block = chunk.getBlock(0, 127, 0);
+        //Move down until a non-empty Block is found
         while (block.getTypeId() == 0)
             block = block.getRelative(BlockFace.DOWN);
+        //Change the empty Block just above the Block found
         block.getRelative(BlockFace.UP).setTypeId(cornerID);
         
+        //Get the highest Block (should be empty) at the South-East corner
         block = chunk.getBlock(0, 127, 15);
+        //Move down until a non-empty Block is found
         while (block.getTypeId() == 0)
             block = block.getRelative(BlockFace.DOWN);
+        //Change the empty Block just above the Block found
         block.getRelative(BlockFace.UP).setTypeId(cornerID);
         
+        //Get the highest Block (should be empty) at the North-West corner
         block = chunk.getBlock(15, 127, 0);
+        //Move down until a non-empty Block is found
         while (block.getTypeId() == 0)
             block = block.getRelative(BlockFace.DOWN);
+        //Change the empty Block just above the Block found
         block.getRelative(BlockFace.UP).setTypeId(cornerID);
         
+        //Get the highest Block (should be empty) at the North-East corner
         block = chunk.getBlock(15, 127, 15);
+        //Move down until a non-empty Block is found
         while (block.getTypeId() == 0)
             block = block.getRelative(BlockFace.DOWN);
+        //Change the empty Block just above the Block found
         block.getRelative(BlockFace.UP).setTypeId(cornerID);
     }
     

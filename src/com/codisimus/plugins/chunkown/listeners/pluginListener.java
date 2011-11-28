@@ -15,6 +15,11 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 public class pluginListener extends ServerListener {
     public static boolean useBP;
 
+    /**
+     * Executes methods to look for various types of plugins to link
+     *
+     * @param event The PluginEnableEvent that occurred
+     */
     @Override
     public void onPluginEnable(PluginEnableEvent event) {
         linkPermissions();
@@ -61,6 +66,10 @@ public class pluginListener extends ServerListener {
 
         //Find an Economy Plugin (will first look for preferred Plugin)
         Methods.setMethod(ChunkOwn.pm);
+        
+        //Return if no Economy Plugin was found
+        if (!Methods.hasMethod())
+            return;
 
         //Reset Methods if the preferred Economy was not found
         if (!Methods.getMethod().getName().equalsIgnoreCase(Register.economy) && !Register.economy.equalsIgnoreCase("auto")) {

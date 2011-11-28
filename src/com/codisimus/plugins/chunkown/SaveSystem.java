@@ -34,8 +34,10 @@ public class SaveSystem {
             while ((line = bReader.readLine()) != null) {
                 String[] data = line.split(";");
 
+                //Construct a new OwnedChunk using the World name and x/z coordinates
                 OwnedChunk ownedChunk = getOwnedChunk(data[0], Integer.parseInt(data[1]), Integer.parseInt(data[2]));
                 
+                //Set the Owner and increment the count of how many Chunks the Player owns
                 ownedChunk.owner = data[3];
                 int owned = 0;
                 Object object = chunkCounter.get(ownedChunk.owner);
@@ -51,6 +53,8 @@ public class SaveSystem {
                 if (!data[5].equals("none")) 
                     ownedChunk.groups = new LinkedList<String>(Arrays.asList(data[5].split(",")));
             }
+            
+            bReader.close();
         }
         catch (Exception loadFailed) {
             System.err.println("[ChunkOwn] Load Failed!");
@@ -68,8 +72,8 @@ public class SaveSystem {
             BufferedWriter bWriter = new BufferedWriter(new FileWriter("plugins/ChunkOwn/chunkown.save"));
             
             //Iterate through all OwnedChunks to write each to the file
-            for (int i=0; i<100; i++)
-                for (int j=0; j<100; j++) {
+            for (int i = 0; i < 100; i++)
+                for (int j = 0; j < 100; j++) {
                     LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[i][j];
                     if (chunkList != null)
                         for (OwnedChunk ownedChunk: chunkList) {

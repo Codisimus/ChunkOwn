@@ -43,6 +43,10 @@ public class ChunkOwn extends JavaPlugin {
     public void onDisable () {
     }
 
+    /**
+     * Calls methods to load this Plugin when it is enabled
+     *
+     */
     @Override
     public void onEnable () {
         server = getServer();
@@ -60,8 +64,7 @@ public class ChunkOwn extends JavaPlugin {
      *
      */
     public void checkFiles() {
-        File file = new File("plugins/ChunkOwn/config.properties");
-        if (!file.exists())
+        if (!new File("plugins/ChunkOwn/config.properties").exists())
             moveFile("config.properties");
     }
     
@@ -139,10 +142,12 @@ public class ChunkOwn extends JavaPlugin {
      * @return The String value of the loaded key
      */
     public String loadValue(String key) {
+        //Print an error if the key is not found
         if (!p.containsKey(key)) {
             System.err.println("[ChunkOwn] Missing value for "+key+" in config file");
             System.err.println("[ChunkOwn] Please regenerate config file");
         }
+        
         return p.getProperty(key);
     }
     
@@ -211,7 +216,7 @@ public class ChunkOwn extends JavaPlugin {
     }
     
     /**
-     * Adds various Unicode characters to a string
+     * Adds various Unicode characters and colors to a string
      * 
      * @param string The string being formated
      * @return The formatted String
@@ -223,9 +228,9 @@ public class ChunkOwn extends JavaPlugin {
     }
     
     /**
-     * Returns true if Player has permission to 'build'
-     * 'build' also refers to many griefing event
-     * all events can be found in the ChunkOwn.registerEvents() method
+     * Returns true if Player has permission to build*
+     * *build also refers to many griefing events**
+     * **all events can be found in the ChunkOwn.registerEvents() method
      * 
      * @param player The Player who is trying to build
      * @param block The Block the playerListener is modifying
