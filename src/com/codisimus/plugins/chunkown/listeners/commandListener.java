@@ -51,8 +51,18 @@ public class commandListener implements CommandExecutor {
             return true;
         }
         
+        Action action;
+        
+        try {
+            action = Action.valueOf(args[0].toUpperCase());
+        }
+        catch (Exception notEnum) {
+            sendHelp(player);
+            return true;
+        }
+        
         //Execute the correct command
-        switch (Action.valueOf(args[0])) {
+        switch (action) {
             case BUY: buy(player); return true;
                 
             case SELL: sell(player); return true;
