@@ -1,11 +1,10 @@
 package com.codisimus.plugins.chunkown;
 
-import com.codisimus.plugins.chunkown.listeners.commandListener;
-import com.codisimus.plugins.chunkown.listeners.pluginListener;
-import com.codisimus.plugins.chunkown.listeners.vehicleListener;
-import com.codisimus.plugins.chunkown.listeners.playerListener;
-import com.codisimus.plugins.chunkown.listeners.entityListener;
-import com.codisimus.plugins.chunkown.listeners.blockListener;
+import com.codisimus.plugins.chunkown.listeners.CommandListener;
+import com.codisimus.plugins.chunkown.listeners.VehicleEventListener;
+import com.codisimus.plugins.chunkown.listeners.PlayerEventListener;
+import com.codisimus.plugins.chunkown.listeners.EntityEventListener;
+import com.codisimus.plugins.chunkown.listeners.BlockEventListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -16,6 +15,8 @@ import java.io.OutputStream;
 import java.util.Properties;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Chunk;
 import org.bukkit.Server;
 import org.bukkit.block.Block;
@@ -23,8 +24,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.tehkode.permissions.PermissionManager;
 
 /**
  * Loads Plugin and manages Permissions
@@ -33,7 +34,7 @@ import ru.tehkode.permissions.PermissionManager;
  */
 public class ChunkOwn extends JavaPlugin {
     public static Server server;
-    public static PermissionManager permissions;
+    public static Permission permission;
     public static PluginManager pm;
     public Properties p;
     public static int lowerLimit;
@@ -51,21 +52,27 @@ public class ChunkOwn extends JavaPlugin {
     public void onEnable () {
         server = getServer();
         pm = server.getPluginManager();
-        checkFiles();
+        
         loadConfig();
+        
+        //Find Permissions
+        RegisteredServiceProvider<Permission> permissionProvider =
+                getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
+        if (permissionProvider != null)
+            permission = permissionProvider.getProvider();
+        
+        //Find Economy
+        RegisteredServiceProvider<Economy> economyProvider =
+                getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+        if (economyProvider != null)
+            Econ.economy = economyProvider.getProvider();
+        
         SaveSystem.load();
+        
         registerEvents();
-        getCommand("chunk").setExecutor(new commandListener());
+        getCommand("chunk").setExecutor(new CommandListener());
+        
         System.out.println("ChunkOwn "+this.getDescription().getVersion()+" is enabled!");
-    }
-    
-    /**
-     * Makes sure all needed files exist
-     *
-     */
-    public void checkFiles() {
-        if (!new File("plugins/ChunkOwn/config.properties").exists())
-            moveFile("config.properties");
     }
     
     /**
@@ -114,25 +121,33 @@ public class ChunkOwn extends JavaPlugin {
     public void loadConfig() {
         p = new Properties();
         try {
+            //Copy the file from the jar if it is missing
+            if (!new File("plugins/ChunkOwn/config.properties").exists())
+                moveFile("config.properties");
+            
             p.load(new FileInputStream("plugins/ChunkOwn/config.properties"));
+            
+            Econ.buyPrice = Double.parseDouble(loadValue("BuyPrice"));
+            Econ.sellPrice = Double.parseDouble(loadValue("SellPrice"));
+            
+            lowerLimit = Integer.parseInt(loadValue("OwnLowerLimit"));
+            
+            CommandListener.cornerID = Integer.parseInt(loadValue("CornerBlockID"));
+            
+            doNotOwnMsg = format(loadValue("DoNotOwnMessage"));
+            CommandListener.permissionMsg = format(loadValue("PermissionMessage"));
+            CommandListener.claimedMsg = format(loadValue("AlreadyClaimedMessage"));
+            CommandListener.limitMsg = format(loadValue("LimitReachedMessage"));
+            CommandListener.unclaimedMsg = format(loadValue("UnclaimedMessage"));
+            CommandListener.buyFreeMsg = format(loadValue("BuyFreeMessage"));
+            Econ.insufficientFundsMsg = format(loadValue("InsufficientFundsMessage"));
+            Econ.buyMsg = format(loadValue("BuyMessage"));
+            Econ.sellMsg = format(loadValue("SellMessage"));
+            Econ.adminSellMsg = format(loadValue("AdminSellMessage"));
+            Econ.adminSoldMsg = format(loadValue("SoldByAdminMessage"));
         }
         catch (Exception e) {
         }
-        Register.economy = loadValue("Economy");
-        Register.buyPrice = Double.parseDouble(loadValue("BuyPrice"));
-        Register.sellPrice = Double.parseDouble(loadValue("SellPrice"));
-        pluginListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
-        commandListener.cornerID = Integer.parseInt(loadValue("CornerBlockID"));
-        lowerLimit = Integer.parseInt(loadValue("OwnLowerLimit"));
-        doNotOwnMsg = format(loadValue("DoNotOwnMessage"));
-        commandListener.permissionMsg = format(loadValue("PermissionMessage"));
-        commandListener.claimedMsg = format(loadValue("AlreadyClaimedMessage"));
-        commandListener.limitMsg = format(loadValue("LimitReachedMessage"));
-        commandListener.unclaimedMsg = format(loadValue("UnclaimedMessage"));
-        commandListener.buyFreeMsg = format(loadValue("BuyFreeMessage"));
-        Register.insufficientFundsMsg = format(loadValue("InsufficientFundsMessage"));
-        Register.buyMsg = format(loadValue("BuyMessage"));
-        Register.sellMsg = format(loadValue("SellMessage"));
     }
 
     /**
@@ -156,13 +171,13 @@ public class ChunkOwn extends JavaPlugin {
      *
      */
     public void registerEvents() {
-        playerListener playerListener = new playerListener();
-        blockListener blockListener = new blockListener();
-        entityListener entityListener = new entityListener();
-        vehicleListener vehicleListener = new vehicleListener();
-        pm.registerEvent(Type.PLUGIN_ENABLE, new pluginListener(), Priority.Monitor, this);
+        PlayerEventListener playerListener = new PlayerEventListener();
+        BlockEventListener blockListener = new BlockEventListener();
+        EntityEventListener entityListener = new EntityEventListener();
+        VehicleEventListener vehicleListener = new VehicleEventListener();
         pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, playerListener, Priority.Highest, this);
         pm.registerEvent(Type.PLAYER_BUCKET_FILL, playerListener, Priority.Highest, this);
+        pm.registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_DAMAGE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_IGNITE, blockListener, Priority.Highest, this);
@@ -182,12 +197,7 @@ public class ChunkOwn extends JavaPlugin {
      * @return True if the given Player has the specific permission
      */
     public static boolean hasPermission(Player player, String type) {
-        //Check if a Permission Plugin is present
-        if (permissions != null)
-            return permissions.has(player, "chunkown."+type);
-
-        //Return Bukkit Permission value
-        return player.hasPermission("chunkown."+type);
+        return permission.has(player, "chunkown."+type);
     }
 
     /**
@@ -198,10 +208,6 @@ public class ChunkOwn extends JavaPlugin {
      * @return The Integer value that is the limit of Chunks the given Player can own
      */
     public static int getOwnLimit(Player player) {
-        //No limit if there is no Permission Plugin
-        if (permissions == null)
-            return -1;
-
         //Check for the unlimited node first
         if (hasPermission(player, "limit.-1"))
             return -1;
@@ -233,7 +239,7 @@ public class ChunkOwn extends JavaPlugin {
      * **all events can be found in the ChunkOwn.registerEvents() method
      * 
      * @param player The Player who is trying to build
-     * @param block The Block the playerListener is modifying
+     * @param block The Block the PlayerEventListener is modifying
      * @return True if Player has permission to 'build'
      */
     public static boolean canBuild(Player player, Block block) {

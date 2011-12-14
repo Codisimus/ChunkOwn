@@ -1,10 +1,11 @@
 name: ChunkOwn
 main: com.codisimus.plugins.chunkown.ChunkOwn
-version: 0.0.2 dev
+version: 0.1.1
 author: Codisimus
 website: www.codisimus.com
 description: Simple area protection based on Chunks
 startup: postworld
+depend: [Vault]
 commands:
   chunk:
     description: Used to own the current Chunk that you are in
@@ -29,5 +30,35 @@ permissions:
     default: false
     description: Restricts Players from building anywhere they don't own that is above the OwnLowerLimit level
   chunkown.limit.-1:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.0:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.1:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.2:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.3:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.4:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.5:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.10:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.20:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.50:
+    default: true
+    description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)
+  chunkown.limit.100:
     default: true
     description: limit the number of Chunks a player can own. -1 = unlimited. -1 can be changed to any number 0 - 100. Largest number is taken if player has more than 1 node (-1 is considered larger than 100)

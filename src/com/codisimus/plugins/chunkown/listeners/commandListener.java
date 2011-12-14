@@ -1,8 +1,8 @@
 package com.codisimus.plugins.chunkown.listeners;
 
 import com.codisimus.plugins.chunkown.ChunkOwn;
+import com.codisimus.plugins.chunkown.Econ;
 import com.codisimus.plugins.chunkown.OwnedChunk;
-import com.codisimus.plugins.chunkown.Register;
 import com.codisimus.plugins.chunkown.SaveSystem;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -19,7 +19,7 @@ import org.bukkit.entity.Player;
  * 
  * @author Codisimus
  */
-public class commandListener implements CommandExecutor {
+public class CommandListener implements CommandExecutor {
     public static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR }
     public static int cornerID;
     public static String permissionMsg;
@@ -131,7 +131,7 @@ public class commandListener implements CommandExecutor {
         //Charge the Player only if they don't have the 'chunkown.free' node
         if (ChunkOwn.hasPermission(player, "free"))
             player.sendMessage(buyFreeMsg);
-        else if(!Register.buy(player)) {
+        else if(!Econ.buy(player)) {
             //Delete the OwnedChunk because the Player could not afford it
             SaveSystem.removeOwnedChunk(world, x, z);
             return;
@@ -163,13 +163,23 @@ public class commandListener implements CommandExecutor {
         int z = chunk.getZ();
         OwnedChunk ownedChunk = SaveSystem.findOwnedChunk(world, x, z);
 
-        //Cancel if the OwnedChunk does not exist or is owned by someone else
-        if (ownedChunk == null || !ownedChunk.owner.equals(player.getName())) {
+        //Cancel if the Chunk is not owned
+        if (ownedChunk == null) {
             player.sendMessage(ChunkOwn.doNotOwnMsg);
             return;
         }
-
-        Register.sell(player);
+        
+        //Cancel if the OwnedChunk is owned by someone else
+        if (ownedChunk.owner.equals(player.getName()))
+            if (ChunkOwn.hasPermission(player, "admin"))
+                Econ.sell(player, ownedChunk.owner);
+            else {
+                player.sendMessage(ChunkOwn.doNotOwnMsg);
+                return;
+            }
+        else
+            Econ.sell(player);
+        
         SaveSystem.removeOwnedChunk(world, x, z);
     }
     
@@ -348,7 +358,7 @@ public class commandListener implements CommandExecutor {
                         //Sell the Chunk if it is owned by the given Player
                         if (ownedChunk.owner.equals(name)) {
                             itr.remove();
-                            Register.sell(player);
+                            Econ.sell(player);
                         }
                     }
                     
@@ -410,8 +420,8 @@ public class commandListener implements CommandExecutor {
      */
     public static void sendHelp(Player player) {
         player.sendMessage("§e     ChunkOwn Help Page:");
-        player.sendMessage("§2/chunk buy§b Purchase the current chunk for "+Register.format(Register.buyPrice));
-        player.sendMessage("§2/chunk sell§b Sell the current chunk for "+Register.format(Register.sellPrice));
+        player.sendMessage("§2/chunk buy§b Purchase the current chunk for "+Econ.format(Econ.buyPrice));
+        player.sendMessage("§2/chunk sell§b Sell the current chunk for "+Econ.format(Econ.sellPrice));
         player.sendMessage("§2/chunk list§b List locations of owned Chunks");
         player.sendMessage("§2/chunk info§b List Owner and CoOwners of current Chunk");
         player.sendMessage("§2/chunk clear§b Sell all owned Chunks");

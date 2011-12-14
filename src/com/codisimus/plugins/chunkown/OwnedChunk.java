@@ -46,7 +46,7 @@ public class OwnedChunk {
 
         //Return true if the Player is in a group that has CoOwnerShip
         for (String group: groups)
-            if (ChunkOwn.permissions.getUser(player).inGroup(group))
+            if (ChunkOwn.permission.playerInGroup(player, group))
                 return true;
         
         //Return false because the Player is not a coowner
