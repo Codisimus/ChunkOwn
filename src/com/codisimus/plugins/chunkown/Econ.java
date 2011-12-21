@@ -12,11 +12,11 @@ public class Econ {
     public static Economy economy;
     public static double buyPrice;
     public static double sellPrice;
-    public static String insufficientFundsMsg;
-    public static String buyMsg;
-    public static String sellMsg;
-    public static String adminSellMsg;
-    public static String adminSoldMsg;
+    static String insufficientFundsMsg;
+    static String buyMsg;
+    static String sellMsg;
+    static String adminSellMsg;
+    static String adminSoldMsg;
 
     /**
      * Charges a Player a given amount of money, which goes to a Player/Bank
@@ -29,13 +29,16 @@ public class Econ {
     public static boolean buy(Player player) {
         String name = player.getName();
         
-        //Cancel if the Player cannot afford the transaction
-        if (!economy.has(name, buyPrice)) {
-            player.sendMessage(insufficientFundsMsg.replaceAll("<price>", economy.format(buyPrice)));
-            return false;
+        if (economy != null) {
+            //Cancel if the Player cannot afford the transaction
+            if (!economy.has(name, buyPrice)) {
+                player.sendMessage(insufficientFundsMsg.replaceAll("<price>", economy.format(buyPrice)));
+                return false;
+            }
+
+            economy.withdrawPlayer(name, buyPrice);
         }
         
-        economy.withdrawPlayer(name, buyPrice);
         player.sendMessage(buyMsg.replaceAll("<price>", economy.format(buyPrice)));
         return true;
     }
@@ -46,7 +49,8 @@ public class Econ {
      * @param player The Player who is selling
      */
     public static void sell(Player player) {
-        economy.depositPlayer(player.getName(), sellPrice);
+        if (economy != null)
+            economy.depositPlayer(player.getName(), sellPrice);
         player.sendMessage(sellMsg.replaceAll("<price>", economy.format(sellPrice)));
     }
     
@@ -57,8 +61,9 @@ public class Econ {
      * @param seller The Player who is being forced to sell
      */
     public static void sell(Player admin, String owner) {
-        economy.depositPlayer(owner, sellPrice);
-        
+        if (economy != null)
+            economy.depositPlayer(owner, sellPrice);
+
         //Notify the Seller
         Player seller = ChunkOwn.server.getPlayer(owner);
         if (seller != null)

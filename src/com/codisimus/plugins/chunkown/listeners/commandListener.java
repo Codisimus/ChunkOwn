@@ -3,7 +3,6 @@ package com.codisimus.plugins.chunkown.listeners;
 import com.codisimus.plugins.chunkown.ChunkOwn;
 import com.codisimus.plugins.chunkown.Econ;
 import com.codisimus.plugins.chunkown.OwnedChunk;
-import com.codisimus.plugins.chunkown.SaveSystem;
 import java.util.Iterator;
 import java.util.LinkedList;
 import org.bukkit.Chunk;
@@ -20,7 +19,7 @@ import org.bukkit.entity.Player;
  * @author Codisimus
  */
 public class CommandListener implements CommandExecutor {
-    public static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR }
+    private static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR }
     public static int cornerID;
     public static String permissionMsg;
     public static String claimedMsg;
@@ -101,7 +100,7 @@ public class CommandListener implements CommandExecutor {
         String world = player.getWorld().getName();
         int x = chunk.getX();
         int z = chunk.getZ();
-        OwnedChunk ownedChunk = SaveSystem.getOwnedChunk(world, x, z);
+        OwnedChunk ownedChunk = ChunkOwn.getOwnedChunk(world, x, z);
 
         //If the owner of the OwnedChunk is not blank then the Chunk is already claimed
         if (ownedChunk.owner != null) {
@@ -117,7 +116,7 @@ public class CommandListener implements CommandExecutor {
         //Don't check how many are owned if the Player is not limited
         if (limit != -1) {
             //Retrieve the ChunkCounter value of the Player
-            Object object = SaveSystem.chunkCounter.get(player.getName());
+            Object object = ChunkOwn.chunkCounter.get(player.getName());
             if (object != null)
                 owned = (Integer)object;
             
@@ -133,15 +132,15 @@ public class CommandListener implements CommandExecutor {
             player.sendMessage(buyFreeMsg);
         else if(!Econ.buy(player)) {
             //Delete the OwnedChunk because the Player could not afford it
-            SaveSystem.removeOwnedChunk(world, x, z);
+            ChunkOwn.removeOwnedChunk(world, x, z);
             return;
         }
         
         //Increment the ChunkCounter of the Player
-        SaveSystem.chunkCounter.put(ownedChunk.owner, owned + 1);
+        ChunkOwn.chunkCounter.put(ownedChunk.owner, owned + 1);
 
         markCorners(chunk);
-        SaveSystem.save();
+        ChunkOwn.save();
     }
     
     /**
@@ -161,7 +160,7 @@ public class CommandListener implements CommandExecutor {
         Chunk chunk = player.getLocation().getBlock().getChunk();
         int x = chunk.getX();
         int z = chunk.getZ();
-        OwnedChunk ownedChunk = SaveSystem.findOwnedChunk(world, x, z);
+        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(world, x, z);
 
         //Cancel if the Chunk is not owned
         if (ownedChunk == null) {
@@ -170,7 +169,7 @@ public class CommandListener implements CommandExecutor {
         }
         
         //Cancel if the OwnedChunk is owned by someone else
-        if (ownedChunk.owner.equals(player.getName()))
+        if (!ownedChunk.owner.equals(player.getName()))
             if (ChunkOwn.hasPermission(player, "admin"))
                 Econ.sell(player, ownedChunk.owner);
             else {
@@ -180,7 +179,7 @@ public class CommandListener implements CommandExecutor {
         else
             Econ.sell(player);
         
-        SaveSystem.removeOwnedChunk(world, x, z);
+        ChunkOwn.removeOwnedChunk(world, x, z);
     }
     
     /**
@@ -199,7 +198,7 @@ public class CommandListener implements CommandExecutor {
         
         //Retrieve the ChunkCounter value to display to the Player
         int owned = 0;
-        Object object = SaveSystem.chunkCounter.get(name);
+        Object object = ChunkOwn.chunkCounter.get(name);
         if (object != null)
             owned = (Integer)object;
         player.sendMessage("Number of Chunks owned: "+owned);
@@ -212,7 +211,7 @@ public class CommandListener implements CommandExecutor {
         //Iterate through all OwnedChunks
         for (int i=0; i<100; i++)
             for (int j=0; j<100; j++) {
-                LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)SaveSystem.matrix[i][j];
+                LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)ChunkOwn.matrix[i][j];
                 if (chunkList != null)
                     for (OwnedChunk ownedChunk: chunkList)
                         //Display Chunk info if it is owned by the given Player
@@ -239,7 +238,7 @@ public class CommandListener implements CommandExecutor {
         Chunk chunk = player.getLocation().getBlock().getChunk();
         int x = chunk.getX();
         int z = chunk.getZ();
-        OwnedChunk ownedChunk = SaveSystem.findOwnedChunk(world, x, z);
+        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(world, x, z);
 
         //Cancel if the OwnedChunk does not exist
         if (ownedChunk == null) {
@@ -253,13 +252,13 @@ public class CommandListener implements CommandExecutor {
         //Display CoOwners of OwnedChunk to Player
         String coOwners = "CoOwners:  ";
         for (String coOwner: ownedChunk.coOwners)
-            coOwners.concat(coOwner.concat(", "));
+            coOwners = coOwners.concat(coOwner.concat(", "));
         player.sendMessage(coOwners.substring(0, coOwners.length() - 2));
 
         //Display CoOwner Groups of OwnedChunk to Player
         String groups = "CoOwner Groups:  ";
         for (String group: ownedChunk.groups)
-            groups.concat(group.concat(", "));
+            groups = groups.concat(group.concat(", "));
         player.sendMessage(groups.substring(0, groups.length() - 2));
     }
     
@@ -280,7 +279,7 @@ public class CommandListener implements CommandExecutor {
         
         //Retrieve the OwnedChunk that the Player is in
         Chunk chunk = player.getLocation().getBlock().getChunk();
-        OwnedChunk ownedChunk = SaveSystem.findOwnedChunk(player.getWorld().getName(), chunk.getX(), chunk.getZ());
+        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(player.getWorld().getName(), chunk.getX(), chunk.getZ());
 
         //Cancel if the OwnedChunk does not exist
         if (ownedChunk == null) {
@@ -334,7 +333,7 @@ public class CommandListener implements CommandExecutor {
             return;
         }
         
-        SaveSystem.save();
+        ChunkOwn.save();
     }
     
     /**
@@ -349,7 +348,7 @@ public class CommandListener implements CommandExecutor {
         //Iterate through all OwnedChunks
         for (int i=0; i<100; i++)
             for (int j=0; j<100; j++) {
-                LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)SaveSystem.matrix[i][j];
+                LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)ChunkOwn.matrix[i][j];
                 if (chunkList != null) {
                     Iterator itr = chunkList.iterator();
                     while (itr.hasNext()) {
@@ -364,14 +363,14 @@ public class CommandListener implements CommandExecutor {
                     
                     //Delete the ChunkList if it is empty
                     if (chunkList.isEmpty())
-                        SaveSystem.matrix[i][j] = null;
+                        ChunkOwn.matrix[i][j] = null;
                 }
             }
         
         //Reset the ChunkCounter of the Player to 0
-        SaveSystem.chunkCounter.put(player, 0);
+        ChunkOwn.chunkCounter.put(player.getName(), 0);
         
-        SaveSystem.save();
+        ChunkOwn.save();
     }
     
     /**
