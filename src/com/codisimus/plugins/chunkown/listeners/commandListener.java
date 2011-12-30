@@ -247,7 +247,7 @@ public class CommandListener implements CommandExecutor {
         }
 
         //Display the world and x/y-coordinates of the center of the OwnedChunk to the Player
-        player.sendMessage("Chunk @ world="+world+" x="+(x*16+8)+" z="+(z*16+8));
+        player.sendMessage("Chunk @ world="+world+" x="+(x*16+8)+" z="+(z*16+8)+" belongs to "+ownedChunk.owner);
 
         //Display CoOwners of OwnedChunk to Player
         String coOwners = "CoOwners:  ";
