@@ -14,6 +14,9 @@ permissions:
   chunkown.own:
     default: true
     description: Needed to manage owned Chunks (/chunk buy, /chunk sell, /chunk list, /chunk clear)
+  chunkown.preview:
+    default: true
+    description: Needed to preview the boundaries of Chunks (/chunk preview)
   chunkown.info:
     default: true
     description: Needed to see who the owner and CoOwners are of the current Chunk (/chunk info)

@@ -3,8 +3,10 @@ package com.codisimus.plugins.chunkown.listeners;
 import com.codisimus.plugins.chunkown.ChunkOwn;
 import com.codisimus.plugins.chunkown.Econ;
 import com.codisimus.plugins.chunkown.OwnedChunk;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import org.bukkit.Chunk;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -19,13 +21,19 @@ import org.bukkit.entity.Player;
  * @author Codisimus
  */
 public class CommandListener implements CommandExecutor {
-    private static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR }
+    private static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW }
+    private static final long COOLDOWN = 180;
     public static int cornerID;
     public static String permissionMsg;
     public static String claimedMsg;
     public static String limitMsg;
     public static String unclaimedMsg;
     public static String buyFreeMsg;
+    private Map<String, Long> playerLastPreview;
+    
+    public CommandListener() {
+        playerLastPreview = new HashMap<String, Long>();
+    }
     
     /**
      * Listens for ChunkOwn commands to execute them
@@ -78,6 +86,8 @@ public class CommandListener implements CommandExecutor {
                 return true;
                 
             case CLEAR: clear(player); return true;
+                
+            case PREVIEW: preview(player); return true;
                 
             default: sendHelp(player); return true;
         }
@@ -141,6 +151,64 @@ public class CommandListener implements CommandExecutor {
 
         markCorners(chunk);
         ChunkOwn.save();
+    }
+    
+    /**
+     * Previews the boundaries of the current Chunk
+     * 
+     * @param player The Player previewing the Chunk
+     */
+    public void preview(Player player) {
+        //Cancel if the Player does not have permission to use the command
+        if (!ChunkOwn.hasPermission(player, "preview")) {
+            player.sendMessage(permissionMsg);
+            return;
+        }
+        
+        // Enforce a cooldown period for this command
+        if (playerLastPreview.containsKey(player.getName())) {
+            long lastPreviewTime = playerLastPreview.get(player.getName());
+            long currentTime = System.currentTimeMillis() / 1000;
+            long delta = currentTime - lastPreviewTime;
+            
+            if (delta < COOLDOWN) {
+                player.sendMessage("You must wait " + (COOLDOWN - delta) + " seconds before previewing another chunk.");
+                return;
+            }
+        }
+        
+        //Retrieve the OwnedChunk that the Player is in
+        Chunk chunk = player.getLocation().getBlock().getChunk();
+        String world = player.getWorld().getName();
+        int x = chunk.getX();
+        int z = chunk.getZ();
+
+        if (ChunkOwn.findOwnedChunk(world, x, z) != null) {
+            // If an OwnedChunk is found, the chunk is already claimed
+            player.sendMessage(claimedMsg);
+            return;
+        }
+
+        int limit = ChunkOwn.getOwnLimit(player);
+        int owned = 0;
+        
+        //Don't check how many are owned if the Player is not limited
+        if (limit != -1) {
+            //Retrieve the ChunkCounter value of the Player
+            Object object = ChunkOwn.chunkCounter.get(player.getName());
+            if (object != null)
+                owned = (Integer)object;
+            
+            //Cancel if the Player owns their maximum limit
+            if (owned >= limit) {
+                player.sendMessage(limitMsg);
+                return;
+            }
+        }
+        
+        markCorners(chunk);
+        
+        playerLastPreview.put(player.getName(), System.currentTimeMillis() / 1000);
     }
     
     /**
@@ -421,6 +489,7 @@ public class CommandListener implements CommandExecutor {
         player.sendMessage("§e     ChunkOwn Help Page:");
         player.sendMessage("§2/chunk buy§b Purchase the current chunk for "+Econ.format(Econ.buyPrice));
         player.sendMessage("§2/chunk sell§b Sell the current chunk for "+Econ.format(Econ.sellPrice));
+        player.sendMessage("§2/chunk preview§b Preview the current chunk's boundaries");
         player.sendMessage("§2/chunk list§b List locations of owned Chunks");
         player.sendMessage("§2/chunk info§b List Owner and CoOwners of current Chunk");
         player.sendMessage("§2/chunk clear§b Sell all owned Chunks");
