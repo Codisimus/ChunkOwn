@@ -1,6 +1,6 @@
 name: ChunkOwn
 main: com.codisimus.plugins.chunkown.ChunkOwn
-version: 0.2.1
+version: 0.3.0
 author: Codisimus
 website: www.codisimus.com
 description: Simple area protection based on Chunks

@@ -32,14 +32,14 @@ public class Econ {
         if (economy != null) {
             //Cancel if the Player cannot afford the transaction
             if (!economy.has(name, buyPrice)) {
-                player.sendMessage(insufficientFundsMsg.replaceAll("<price>", economy.format(buyPrice)));
+                player.sendMessage(insufficientFundsMsg.replace("<price>", economy.format(buyPrice)));
                 return false;
             }
 
             economy.withdrawPlayer(name, buyPrice);
         }
         
-        player.sendMessage(buyMsg.replaceAll("<price>", economy.format(buyPrice)));
+        player.sendMessage(buyMsg.replace("<price>", economy.format(buyPrice)));
         return true;
     }
     
@@ -51,7 +51,7 @@ public class Econ {
     public static void sell(Player player) {
         if (economy != null)
             economy.depositPlayer(player.getName(), sellPrice);
-        player.sendMessage(sellMsg.replaceAll("<price>", economy.format(sellPrice)));
+        player.sendMessage(sellMsg.replace("<price>", economy.format(sellPrice)));
     }
     
     /**
@@ -67,9 +67,9 @@ public class Econ {
         //Notify the Seller
         Player seller = ChunkOwn.server.getPlayer(owner);
         if (seller != null)
-            seller.sendMessage(adminSoldMsg.replaceAll("<price>", economy.format(sellPrice)));
+            seller.sendMessage(adminSoldMsg.replace("<price>", economy.format(sellPrice)));
         
-        admin.sendMessage(adminSellMsg.replaceAll("<price>", economy.format(sellPrice)));
+        admin.sendMessage(adminSellMsg.replace("<price>", economy.format(sellPrice)));
     }
     
     /**
