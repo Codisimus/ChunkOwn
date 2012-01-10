@@ -1,21 +1,7 @@
 package com.codisimus.plugins.chunkown;
 
-import com.codisimus.plugins.chunkown.listeners.CommandListener;
-import com.codisimus.plugins.chunkown.listeners.VehicleEventListener;
-import com.codisimus.plugins.chunkown.listeners.PlayerEventListener;
-import com.codisimus.plugins.chunkown.listeners.EntityEventListener;
-import com.codisimus.plugins.chunkown.listeners.BlockEventListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.codisimus.plugins.chunkown.listeners.*;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -145,6 +131,8 @@ public class ChunkOwn extends JavaPlugin {
             lowerLimit = Integer.parseInt(loadValue("OwnLowerLimit"));
             
             CommandListener.cornerID = Integer.parseInt(loadValue("CornerBlockID"));
+            
+            CommandListener.cooldown = Integer.parseInt(loadValue("PreviewCooldown"));
             
             doNotOwnMsg = format(loadValue("DoNotOwnMessage"));
             CommandListener.permissionMsg = format(loadValue("PermissionMessage"));

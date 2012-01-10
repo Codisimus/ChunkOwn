@@ -22,7 +22,7 @@ import org.bukkit.entity.Player;
  */
 public class CommandListener implements CommandExecutor {
     private static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW }
-    private static final long COOLDOWN = 180;
+    public static long cooldown;
     public static int cornerID;
     public static String permissionMsg;
     public static String claimedMsg;
@@ -171,8 +171,8 @@ public class CommandListener implements CommandExecutor {
             long currentTime = System.currentTimeMillis() / 1000;
             long delta = currentTime - lastPreviewTime;
             
-            if (delta < COOLDOWN) {
-                player.sendMessage("You must wait " + (COOLDOWN - delta) + " seconds before previewing another chunk.");
+            if (delta < cooldown) {
+                player.sendMessage("You must wait " + (cooldown - delta) + " seconds before previewing another chunk.");
                 return;
             }
         }
