@@ -165,8 +165,8 @@ public class CommandListener implements CommandExecutor {
             return;
         }
         
-        // Enforce a cooldown period for this command
-        if (playerLastPreview.containsKey(player.getName())) {
+        // If not admin, enforce a cooldown period for this command
+        if (!ChunkOwn.hasPermission(player, "admin") && playerLastPreview.containsKey(player.getName())) {
             long lastPreviewTime = playerLastPreview.get(player.getName());
             long currentTime = System.currentTimeMillis() / 1000;
             long delta = currentTime - lastPreviewTime;
