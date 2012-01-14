@@ -127,6 +127,7 @@ public class ChunkOwn extends JavaPlugin {
             
             Econ.buyPrice = Double.parseDouble(loadValue("BuyPrice"));
             Econ.sellPrice = Double.parseDouble(loadValue("SellPrice"));
+            Econ.multiplier = Double.parseDouble(loadValue("BuyMultiplier"));
             
             lowerLimit = Integer.parseInt(loadValue("OwnLowerLimit"));
             

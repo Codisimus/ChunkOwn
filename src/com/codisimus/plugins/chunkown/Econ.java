@@ -12,6 +12,7 @@ public class Econ {
     public static Economy economy;
     public static double buyPrice;
     public static double sellPrice;
+    public static double multiplier;
     static String insufficientFundsMsg;
     static String buyMsg;
     static String sellMsg;
@@ -28,18 +29,19 @@ public class Econ {
      */
     public static boolean buy(Player player) {
         String name = player.getName();
+        double price = getPrice(name);
         
         if (economy != null) {
             //Cancel if the Player cannot afford the transaction
-            if (!economy.has(name, buyPrice)) {
-                player.sendMessage(insufficientFundsMsg.replace("<price>", economy.format(buyPrice)));
+            if (!economy.has(name, price)) {
+                player.sendMessage(insufficientFundsMsg.replace("<price>", economy.format(price)));
                 return false;
             }
 
-            economy.withdrawPlayer(name, buyPrice);
+            economy.withdrawPlayer(name, price);
         }
         
-        player.sendMessage(buyMsg.replace("<price>", economy.format(buyPrice)));
+        player.sendMessage(buyMsg.replace("<price>", economy.format(price)));
         return true;
     }
     
@@ -83,5 +85,22 @@ public class Econ {
             return "nothing";
         
         return economy.format(amount).replace(".00", "");
+    }
+    
+    /**
+     * Returns the BuyPrice for the given Player
+     * 
+     * @param player The given Player
+     * @return The calculated BuyPrice
+     */
+    public static double getPrice(String player) {
+        int owned = 0;
+        
+        //Retrieve the ChunkCounter value of the Player
+        Object object = ChunkOwn.chunkCounter.get(player);
+        if (object != null)
+            owned = (Integer)object;
+        
+        return buyPrice * Math.pow(multiplier, owned);
     }
 }

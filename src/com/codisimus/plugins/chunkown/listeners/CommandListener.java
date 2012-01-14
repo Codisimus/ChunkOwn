@@ -123,7 +123,7 @@ public class CommandListener implements CommandExecutor {
         int limit = ChunkOwn.getOwnLimit(player);
         int owned = 0;
         
-        //Don't check how many are owned if the Player is not limited
+        //Check if the Player is limited
         if (limit != -1) {
             //Retrieve the ChunkCounter value of the Player
             Object object = ChunkOwn.chunkCounter.get(player.getName());
@@ -487,8 +487,8 @@ public class CommandListener implements CommandExecutor {
      */
     public static void sendHelp(Player player) {
         player.sendMessage("§e     ChunkOwn Help Page:");
-        player.sendMessage("§2/chunk buy§b Purchase the current chunk for "+Econ.format(Econ.buyPrice));
-        player.sendMessage("§2/chunk sell§b Sell the current chunk for "+Econ.format(Econ.sellPrice));
+        player.sendMessage("§2/chunk buy§b Purchase the current chunk for "+Econ.format(Econ.getPrice(player.getName())));
+        player.sendMessage("§2/chunk sell§b Sell the current chunk for "+Econ.format(Econ.getPrice(player.getName())));
         player.sendMessage("§2/chunk preview§b Preview the current chunk's boundaries");
         player.sendMessage("§2/chunk list§b List locations of owned Chunks");
         player.sendMessage("§2/chunk info§b List Owner and CoOwners of current Chunk");
