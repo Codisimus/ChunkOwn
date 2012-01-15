@@ -12,6 +12,7 @@ import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Chunk;
 import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
@@ -34,6 +35,7 @@ public class ChunkOwn extends JavaPlugin {
     public static String doNotOwnMsg;
     public static Object[][] matrix = new Object[100][100];
     public static HashMap chunkCounter = new HashMap();
+    public static int groupSize;
 
     @Override
     public void onDisable () {
@@ -129,6 +131,8 @@ public class ChunkOwn extends JavaPlugin {
             Econ.sellPrice = Double.parseDouble(loadValue("SellPrice"));
             Econ.multiplier = Double.parseDouble(loadValue("BuyMultiplier"));
             
+            groupSize = Integer.parseInt(loadValue("MinimumGroupSize"));
+            
             lowerLimit = Integer.parseInt(loadValue("OwnLowerLimit"));
             
             CommandListener.cornerID = Integer.parseInt(loadValue("CornerBlockID"));
@@ -146,6 +150,7 @@ public class ChunkOwn extends JavaPlugin {
             Econ.sellMsg = format(loadValue("SellMessage"));
             Econ.adminSellMsg = format(loadValue("AdminSellMessage"));
             Econ.adminSoldMsg = format(loadValue("SoldByAdminMessage"));
+            CommandListener.groupLandMsg = format(loadValue("MustGroupLandMessage"));
             
             fis.close();
         }
@@ -470,5 +475,97 @@ public class ChunkOwn extends JavaPlugin {
             matrix[row][column] = null;
         
         save();
+    }
+    
+    /**
+     * Retrieves a list of Chunks that the given Player owns
+     * 
+     * @param player The name of the given Player
+     * @return The list of Chunks
+     */
+    public static LinkedList<Chunk> getOwnedChunks(String player) {
+        //Retrieve the ChunkCounter value of the Player
+        int owned = 0;
+        Object object = ChunkOwn.chunkCounter.get(player);
+        if (object != null)
+            owned = (Integer)object;
+            
+        LinkedList<Chunk> ownedChunks = new LinkedList<Chunk>();
+        
+        if (owned == 0)
+            return ownedChunks;
+        
+        for (int i = 0; i < 100; i++)
+            for (int j = 0; j < 100; j++) {
+                LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[i][j];
+                if (chunkList != null)
+                    for (OwnedChunk chunk: chunkList)
+                        if (chunk.owner.equals(player)) {
+                            ownedChunks.add(server.getWorld(chunk.world).getChunkAt(chunk.x, chunk.z));
+                            owned--;
+                            
+                            if (owned == 0)
+                                return ownedChunks;
+                        }
+            }
+        
+        return ownedChunks;
+    }
+    
+    /**
+     * Returns true if all connected Owned Chunks are grouped in sizes that equal or exceed the chunkSize
+     * True is returned if specific group sizes are not required
+     * True is returned if the ChunkList is empty
+     * 
+     * @return true if all Chunk groups are large enough
+     */
+    public static boolean canBuyLoner(LinkedList<Chunk> chunkList) {
+        //Return true if specific group sizes are not required
+        if (groupSize < 2)
+            return true;
+        
+        while (!chunkList.isEmpty()) {
+            //Return false if the group size is not large enough
+            if (getSize(chunkList, chunkList.removeFirst()) < groupSize)
+                return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Returns the total amount of connected Chunks that this Chunk is included in
+     * A Chunk is connected if it is adjacent to one of the 4 sides and has the same owner
+     * 
+     * @return The Chunk Size
+     */
+    private static int getSize(LinkedList<Chunk> owned, Chunk chunk) {
+        int size = 1;
+        World world = chunk.getWorld();
+        int x = chunk.getX();
+        int z = chunk.getZ();
+        
+        //Compass directions may not be accurate but you get the idea
+        //Check for connected Chunks to the North
+        chunk = world.getChunkAt(x + 1, z);
+        if (owned.remove(chunk))
+            size = size + getSize(owned, chunk);
+        
+        //Check for connected Chunks to the East
+        chunk = world.getChunkAt(x, z + 1);
+        if (owned.remove(chunk))
+            size = size + getSize(owned, chunk);
+        
+        //Check for connected Chunks to the South
+        chunk = world.getChunkAt(x - 1, z);
+        if (owned.remove(chunk))
+            size = size + getSize(owned, chunk);
+        
+        //Check for connected Chunks to the West
+        chunk = world.getChunkAt(x, z - 1);
+        if (owned.remove(chunk))
+            size = size + getSize(owned, chunk);
+        
+        return size;
     }
 }

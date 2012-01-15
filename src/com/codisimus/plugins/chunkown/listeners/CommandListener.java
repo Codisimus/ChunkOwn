@@ -29,6 +29,7 @@ public class CommandListener implements CommandExecutor {
     public static String limitMsg;
     public static String unclaimedMsg;
     public static String buyFreeMsg;
+    public static String groupLandMsg;
     private Map<String, Long> playerLastPreview;
     
     public CommandListener() {
@@ -117,8 +118,6 @@ public class CommandListener implements CommandExecutor {
             player.sendMessage(claimedMsg);
             return;
         }
-        
-        ownedChunk.owner = player.getName();
 
         int limit = ChunkOwn.getOwnLimit(player);
         int owned = 0;
@@ -137,6 +136,20 @@ public class CommandListener implements CommandExecutor {
             }
         }
         
+        //Check if a group size is required
+        if (ChunkOwn.groupSize > 1) {
+            //Check if the Chunk is a loner (not connected to other owned Chunks
+            LinkedList<Chunk> ownedChunks = ChunkOwn.getOwnedChunks(ownedChunk.owner);
+            if (ownedChunk.isLoner(ownedChunks))
+                if (!ChunkOwn.canBuyLoner(ownedChunks)) {
+                    //Delete the OwnedChunk because the Player cannot buy a lone Chunk
+                    ChunkOwn.removeOwnedChunk(world, x, z);
+                    
+                    player.sendMessage(groupLandMsg.replace("<MinimumGroupSize>", String.valueOf(ChunkOwn.groupSize)));
+                    return;
+                }
+        }
+        
         //Charge the Player only if they don't have the 'chunkown.free' node
         if (ChunkOwn.hasPermission(player, "free"))
             player.sendMessage(buyFreeMsg);
@@ -146,9 +159,11 @@ public class CommandListener implements CommandExecutor {
             return;
         }
         
+        ownedChunk.owner = player.getName();
+
         //Increment the ChunkCounter of the Player
         ChunkOwn.chunkCounter.put(ownedChunk.owner, owned + 1);
-
+        
         markCorners(chunk);
         ChunkOwn.save();
     }

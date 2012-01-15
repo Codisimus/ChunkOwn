@@ -1,6 +1,7 @@
 package com.codisimus.plugins.chunkown;
 
 import java.util.LinkedList;
+import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
 
 /**
@@ -51,5 +52,30 @@ public class OwnedChunk {
         
         //Return false because the Player is not a coowner
         return false;
+    }
+    
+    /**
+     * Returns true if there are no neighboring Chunks with the same Owner
+     * 
+     * @param ownedChunks The list of Chunks to check for neighbors
+     * @return True if there are no neighboring Chunks with the same Owner
+     */
+    public boolean isLoner(LinkedList<Chunk> ownedChunks) {
+        for (Chunk chunk: ownedChunks) {
+            int a = chunk.getX();
+            int c = chunk.getZ();
+            
+            if (a == x) {
+                if (c == z + 1 || c == z - 1)
+                    if (chunk.getWorld().getName().equals(world))
+                        return false;
+            }
+            else if (c == z)
+                if (a == x + 1 || a == x - 1)
+                    if (chunk.getWorld().getName().equals(world))
+                        return false;
+        }
+        
+        return true;
     }
 }
