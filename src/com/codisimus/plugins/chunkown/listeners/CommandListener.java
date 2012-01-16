@@ -136,10 +136,13 @@ public class CommandListener implements CommandExecutor {
             }
         }
         
+        String name = player.getName();
+        
         //Check if a group size is required
         if (ChunkOwn.groupSize > 1) {
             //Check if the Chunk is a loner (not connected to other owned Chunks
-            LinkedList<Chunk> ownedChunks = ChunkOwn.getOwnedChunks(ownedChunk.owner);
+            LinkedList<Chunk> ownedChunks = ChunkOwn.getOwnedChunks(name);
+            
             if (ownedChunk.isLoner(ownedChunks))
                 if (!ChunkOwn.canBuyLoner(ownedChunks)) {
                     //Delete the OwnedChunk because the Player cannot buy a lone Chunk
@@ -159,8 +162,14 @@ public class CommandListener implements CommandExecutor {
             return;
         }
         
-        ownedChunk.owner = player.getName();
+        ownedChunk.owner = name;
 
+        //Retrieve the ChunkCounter value of the Player
+        owned = 0;
+        Object object = ChunkOwn.chunkCounter.get(player.getName());
+        if (object != null)
+            owned = (Integer)object;
+        
         //Increment the ChunkCounter of the Player
         ChunkOwn.chunkCounter.put(ownedChunk.owner, owned + 1);
         
@@ -423,11 +432,29 @@ public class CommandListener implements CommandExecutor {
      * Removes all the Chunks that are owned by the given Player
      * A Chunk is owned buy a Player if the owner field is the Player's name
      * 
-     * @param player The name of the Player
+     * @param player The given Player
      */
     public static void clear(Player player) {
-        String name = player.getName();
-        
+        clear(player, player.getName());
+    }
+    
+    /**
+     * Removes all the Chunks that are owned by the given Player
+     * A Chunk is owned buy a Player if the owner field is the Player's name
+     * 
+     * @param player The name of the Player
+     */
+    public static void clear(String player) {
+        clear(null, player);
+    }
+    
+    /**
+     * Removes all the Chunks that are owned by the given Player
+     * A Chunk is owned buy a Player if the owner field is the Player's name
+     * 
+     * @param player The given Player
+     */
+    private static void clear(Player player, String name) {
         //Iterate through all OwnedChunks
         for (int i=0; i<100; i++)
             for (int j=0; j<100; j++) {
@@ -440,7 +467,12 @@ public class CommandListener implements CommandExecutor {
                         //Sell the Chunk if it is owned by the given Player
                         if (ownedChunk.owner.equals(name)) {
                             itr.remove();
-                            Econ.sell(player);
+                            
+                            if (player == null)
+                                Econ.sell(name);
+                            else
+                                Econ.sell(player);
+                            
                         }
                     }
                     
@@ -451,7 +483,7 @@ public class CommandListener implements CommandExecutor {
             }
         
         //Reset the ChunkCounter of the Player to 0
-        ChunkOwn.chunkCounter.put(player.getName(), 0);
+        ChunkOwn.chunkCounter.put(name, 0);
         
         ChunkOwn.save();
     }

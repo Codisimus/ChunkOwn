@@ -3,10 +3,7 @@ package com.codisimus.plugins.chunkown.listeners;
 import com.codisimus.plugins.chunkown.ChunkOwn;
 import org.bukkit.Material;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.*;
 
 /**
  * Listens for commands and griefing events
@@ -50,5 +47,43 @@ public class PlayerEventListener extends PlayerListener {
         
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getClickedBlock()))
             event.setCancelled(true);
+    }
+    
+    /**
+     * Updates the last time that Players that own Chunks were seen
+     * 
+     * @param event The PlayerJoinEvent that occurred
+     */
+    @Override
+    public void onPlayerJoin (PlayerJoinEvent event) {
+        String name = event.getPlayer().getName();
+        
+        Object object = ChunkOwn.chunkCounter.get(name);
+        if (object == null)
+            return;
+        
+        if ((Integer)object > 0)
+            ChunkOwn.lastDaySeen.setProperty(name, String.valueOf(ChunkOwn.getDayAD()));
+        
+        ChunkOwn.saveLastSeen();
+    }
+    
+    /**
+     * Updates the last time that Players that own Chunks were seen
+     * 
+     * @param event The PlayerQuitEvent that occurred
+     */
+    @Override
+    public void onPlayerQuit (PlayerQuitEvent event) {
+        String name = event.getPlayer().getName();
+        
+        Object object = ChunkOwn.chunkCounter.get(name);
+        if (object == null)
+            return;
+        
+        if ((Integer)object > 0)
+            ChunkOwn.lastDaySeen.setProperty(name, String.valueOf(ChunkOwn.getDayAD()));
+        
+        ChunkOwn.saveLastSeen();
     }
 }

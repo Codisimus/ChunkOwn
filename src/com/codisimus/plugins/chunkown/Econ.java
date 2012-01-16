@@ -51,9 +51,19 @@ public class Econ {
      * @param player The Player who is selling
      */
     public static void sell(Player player) {
-        if (economy != null)
-            economy.depositPlayer(player.getName(), sellPrice);
+        sell(player.getName());
+        
         player.sendMessage(sellMsg.replace("<price>", economy.format(sellPrice)));
+    }
+    
+    /**
+     * Adds the sellPrice to the Player's total balance
+     * 
+     * @param name The name of the Player who is selling
+     */
+    public static void sell(String name) {
+        if (economy != null)
+            economy.depositPlayer(name, sellPrice);
     }
     
     /**
@@ -63,8 +73,7 @@ public class Econ {
      * @param seller The Player who is being forced to sell
      */
     public static void sell(Player admin, String owner) {
-        if (economy != null)
-            economy.depositPlayer(owner, sellPrice);
+        sell(owner);
 
         //Notify the Seller
         Player seller = ChunkOwn.server.getPlayer(owner);

@@ -2,10 +2,7 @@ package com.codisimus.plugins.chunkown;
 
 import com.codisimus.plugins.chunkown.listeners.*;
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Properties;
+import java.util.*;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import net.milkbowl.vault.economy.Economy;
@@ -36,6 +33,8 @@ public class ChunkOwn extends JavaPlugin {
     public static Object[][] matrix = new Object[100][100];
     public static HashMap chunkCounter = new HashMap();
     public static int groupSize;
+    private static int disownTime;
+    public static Properties lastDaySeen;
 
     @Override
     public void onDisable () {
@@ -68,6 +67,10 @@ public class ChunkOwn extends JavaPlugin {
         
         registerEvents();
         getCommand("chunk").setExecutor(new CommandListener());
+        
+        //Start the tickListener if there is an AutoDisownTimer
+        if (disownTime > 0)
+            tickListener();
         
         System.out.println("ChunkOwn "+this.getDescription().getVersion()+" is enabled!");
     }
@@ -139,6 +142,8 @@ public class ChunkOwn extends JavaPlugin {
             
             CommandListener.cooldown = Integer.parseInt(loadValue("PreviewCooldown"));
             
+            disownTime = Integer.parseInt(loadValue("AutoDisownTimer"));
+            
             doNotOwnMsg = format(loadValue("DoNotOwnMessage"));
             CommandListener.permissionMsg = format(loadValue("PermissionMessage"));
             CommandListener.claimedMsg = format(loadValue("AlreadyClaimedMessage"));
@@ -186,6 +191,8 @@ public class ChunkOwn extends JavaPlugin {
         pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, playerListener, Priority.Highest, this);
         pm.registerEvent(Type.PLAYER_BUCKET_FILL, playerListener, Priority.Highest, this);
         pm.registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Highest, this);
+        pm.registerEvent(Type.PLAYER_JOIN, playerListener, Priority.Monitor, this);
+        pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Monitor, this);
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_DAMAGE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_IGNITE, blockListener, Priority.Highest, this);
@@ -303,7 +310,7 @@ public class ChunkOwn extends JavaPlugin {
             BufferedReader bReader = new BufferedReader(new FileReader("plugins/ChunkOwn/chunkown.save"));
 
             //Convert each line into data until all lines are read
-            String line = "";
+            String line;
             while ((line = bReader.readLine()) != null) {
                 String[] data = line.split(";");
 
@@ -332,6 +339,21 @@ public class ChunkOwn extends JavaPlugin {
         catch (Exception loadFailed) {
             System.err.println("[ChunkOwn] Load Failed!");
             loadFailed.printStackTrace();
+        }
+    }
+    
+    /**
+     * Loads last seen data from file
+     * 
+     */
+    public static void loadLastSeen() {
+        lastDaySeen = new Properties();
+        try {
+            FileInputStream fis = new FileInputStream("plugins/ChunkOwn/lastseen.map");
+            lastDaySeen.load(fis);
+            fis.close();
+        }
+        catch (Exception ex) {
         }
     }
     
@@ -379,6 +401,18 @@ public class ChunkOwn extends JavaPlugin {
         catch (Exception saveFailed) {
             System.err.println("[ChunkOwn] Save Failed!");
             saveFailed.printStackTrace();
+        }
+    }
+    
+    /**
+     * Writes the Map of last seen data to the save file
+     * Old file is over written
+     */
+    public static void saveLastSeen() {
+        try {
+            lastDaySeen.store(new FileOutputStream("plugins/ChunkOwn/lastseen.map"), null);
+        }
+        catch (Exception ex) {
         }
     }
     
@@ -500,7 +534,7 @@ public class ChunkOwn extends JavaPlugin {
                 LinkedList<OwnedChunk> chunkList = (LinkedList<OwnedChunk>)matrix[i][j];
                 if (chunkList != null)
                     for (OwnedChunk chunk: chunkList)
-                        if (chunk.owner.equals(player)) {
+                        if (chunk.owner != null && chunk.owner.equals(player)) {
                             ownedChunks.add(server.getWorld(chunk.world).getChunkAt(chunk.x, chunk.z));
                             owned--;
                             
@@ -567,5 +601,39 @@ public class ChunkOwn extends JavaPlugin {
             size = size + getSize(owned, chunk);
         
         return size;
+    }
+    
+    /**
+     * Returns the number of the current day in the AD time period
+     * 
+     * @return The number of the current day in the AD time period
+     */
+    public static int getDayAD() {
+        Calendar calendar = Calendar.getInstance();
+        int yearAD = calendar.get(Calendar.YEAR);
+        int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
+        return (int)((yearAD - 1) * 365.4) + dayOfYear;
+    }
+    
+    /**
+     * Checks for Players who have not logged on within the given amount of time
+     * These Players will have their OwnedChunks automatically disowned
+     * Players that do not have any Owned Chunks are ignored
+     */
+    public void tickListener() {
+        //Repeat every day
+    	server.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+            @Override
+    	    public void run() {
+                int cutoffDay = getDayAD() - disownTime;
+                
+                for (String key: lastDaySeen.stringPropertyNames())
+                    if (Integer.parseInt(lastDaySeen.getProperty(key)) < cutoffDay) {
+                        System.out.println("[ChunkOwn] Clearing Chunks that are owned by "+key);
+                        CommandListener.clear(key);
+                        lastDaySeen.remove(key);
+                    }
+    	    }
+    	}, 0L, 1728000L);
     }
 }
