@@ -1,13 +1,7 @@
 package com.codisimus.plugins.chunkown.listeners;
 
 import com.codisimus.plugins.chunkown.ChunkOwn;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockDamageEvent;
-import org.bukkit.event.block.BlockIgniteEvent;
-import org.bukkit.event.block.BlockListener;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.BlockSpreadEvent;
-import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.block.*;
 
 /**
  * Listens for griefing events
@@ -23,17 +17,6 @@ public class BlockEventListener extends BlockListener {
      */
     @Override
     public void onBlockBreak (BlockBreakEvent event) {
-        if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock()))
-            event.setCancelled(true);
-    }
-
-    /**
-     * Blocks within an OwnedChunk can only be damaged by the owner, a coowner, or an admin
-     * 
-     * @param event The BlockDamageEvent that occurred
-     */
-    @Override
-    public void onBlockDamage (BlockDamageEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock()))
             event.setCancelled(true);
     }

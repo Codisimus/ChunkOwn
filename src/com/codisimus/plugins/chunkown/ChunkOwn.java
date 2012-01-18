@@ -64,6 +64,7 @@ public class ChunkOwn extends JavaPlugin {
             Econ.economy = economyProvider.getProvider();
         
         loadData();
+        loadLastSeen();
         
         registerEvents();
         getCommand("chunk").setExecutor(new CommandListener());
@@ -194,12 +195,12 @@ public class ChunkOwn extends JavaPlugin {
         pm.registerEvent(Type.PLAYER_JOIN, playerListener, Priority.Monitor, this);
         pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Monitor, this);
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Highest, this);
-        pm.registerEvent(Type.BLOCK_DAMAGE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_IGNITE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_SPREAD, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.SIGN_CHANGE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.PAINTING_PLACE, entityListener, Priority.Highest, this);
+        pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.Highest, this);
         pm.registerEvent(Type.VEHICLE_DAMAGE, vehicleListener, Priority.Highest, this);
         pm.registerEvent(Type.VEHICLE_DESTROY, vehicleListener, Priority.Highest, this);
     }
@@ -261,11 +262,11 @@ public class ChunkOwn extends JavaPlugin {
         //Allow building if Player has admin node
         if (player != null && hasPermission(player, "admin"))
             return true;
-
+        
         //Allow building if below the lower limit
         if (block.getY() < ChunkOwn.lowerLimit)
             return true;
-
+        
         String world = block.getWorld().getName();
         Chunk chunk = block.getChunk();
         int x = chunk.getX();
@@ -273,7 +274,7 @@ public class ChunkOwn extends JavaPlugin {
         
         //See if the area is owned by a Player
         OwnedChunk ownedChunk = findOwnedChunk(world, x, z);
-
+        
         //If unowned, deny building if the Player cannot build on unclaimed land
         if (ownedChunk == null)
             if (player != null && hasPermission(player, "mustowntobuild")) {
@@ -282,11 +283,11 @@ public class ChunkOwn extends JavaPlugin {
             }
             else
                 return true;
-
+        
         //Deny building if no Player can be determined
         if (player == null)
             return false;
-
+        
         //Allow building if the Player is an Owner or CoOwner of the land
         if (ownedChunk.owner.equals(player.getName()))
             return true;
@@ -349,6 +350,10 @@ public class ChunkOwn extends JavaPlugin {
     public static void loadLastSeen() {
         lastDaySeen = new Properties();
         try {
+            //Create the file if it does not exist
+            new File("plugins/ChunkOwn").mkdir();
+            new File("plugins/ChunkOwn/lastseen.map").createNewFile();
+            
             FileInputStream fis = new FileInputStream("plugins/ChunkOwn/lastseen.map");
             lastDaySeen.load(fis);
             fis.close();
@@ -632,6 +637,7 @@ public class ChunkOwn extends JavaPlugin {
                         System.out.println("[ChunkOwn] Clearing Chunks that are owned by "+key);
                         CommandListener.clear(key);
                         lastDaySeen.remove(key);
+                        saveLastSeen();
                     }
     	    }
     	}, 0L, 1728000L);
