@@ -78,4 +78,12 @@ public class OwnedChunk {
         
         return true;
     }
+    
+    public void saveSnapshot() {
+        ChunkOwn.saveSnapshot(ChunkOwn.server.getWorld(world), x, z);
+    }
+    
+    public void revert() {
+        ChunkOwn.revertChunk(ChunkOwn.server.getWorld(world), x, z);
+    }
 }

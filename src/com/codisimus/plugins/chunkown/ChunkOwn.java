@@ -34,6 +34,7 @@ public class ChunkOwn extends JavaPlugin {
     public static HashMap chunkCounter = new HashMap();
     public static int groupSize;
     private static int disownTime;
+    private static boolean revertChunks;
     public static Properties lastDaySeen;
 
     @Override
@@ -145,6 +146,8 @@ public class ChunkOwn extends JavaPlugin {
             
             disownTime = Integer.parseInt(loadValue("AutoDisownTimer"));
             
+            revertChunks = Boolean.parseBoolean(loadValue("RevertChunks"));
+            
             doNotOwnMsg = format(loadValue("DoNotOwnMessage"));
             CommandListener.permissionMsg = format(loadValue("PermissionMessage"));
             CommandListener.claimedMsg = format(loadValue("AlreadyClaimedMessage"));
@@ -197,7 +200,7 @@ public class ChunkOwn extends JavaPlugin {
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_IGNITE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Highest, this);
-        pm.registerEvent(Type.BLOCK_SPREAD, blockListener, Priority.Highest, this);
+        pm.registerEvent(Type.BLOCK_PISTON_EXTEND, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.SIGN_CHANGE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.PAINTING_PLACE, entityListener, Priority.Highest, this);
         pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.Highest, this);
@@ -506,10 +509,12 @@ public class ChunkOwn extends JavaPlugin {
                 
                 //Remove the OwnedChunk when it is found
                 chunkList.remove(ownedChunk);
+                
+                ownedChunk.revert();
                 break;
             }
         
-        //Delete the chunkjList if it is now empty
+        //Delete the chunkList if it is now empty
         if (chunkList.isEmpty())
             matrix[row][column] = null;
         
@@ -641,5 +646,148 @@ public class ChunkOwn extends JavaPlugin {
                     }
     	    }
     	}, 0L, 1728000L);
+    }
+    
+    public static void saveSnapshot(Chunk chunk) {
+        saveSnapshot(chunk.getWorld(), chunk.getX(), chunk.getZ());
+    }
+    
+    public static void saveSnapshot(World world, int chunkX, int chunkZ) {
+        if (!revertChunks)
+            return;
+        
+        try {
+            File file = new File("plugins/ChunkOwn/Chunk Snapshots/"+world.getName());
+            if (!file.exists())
+                file.mkdirs();
+            
+            file = new File("plugins/ChunkOwn/Chunk Snapshots/"+world.getName()+"/"+chunkX+"-"+chunkZ+".cota");
+            if (file.exists())
+                return;
+            else
+                file.createNewFile();
+
+            int size = 256 * (128 - lowerLimit);
+
+            byte[] typeArray = new byte[size];
+            byte[] dataArray = new byte[size];
+            int index = 0;
+
+            int x = 16 * chunkX;
+            int z = 16 * chunkZ;
+
+            for (int i = 0; i < 16; i++)
+                for (int j = 0; j < 16; j++) {
+                    int y = world.getHighestBlockYAt(x, z);
+                    if (y >= lowerLimit)
+                        index = index + 127 - y;
+
+                    while (y >= lowerLimit) {
+                        byte type = (byte)world.getBlockAt(x + i, y, z + j).getTypeId();
+                        typeArray[index] = type;
+                        
+                        byte data = world.getBlockAt(x + i, y, z + j).getData();
+                        dataArray[index] = data;
+                        
+                        index++;
+                        y--;
+                    }
+                }
+        
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(typeArray);
+            fos.close();
+            
+            file = new File("plugins/ChunkOwn/Chunk Snapshots/"+world.getName()+"/"+chunkX+"-"+chunkZ+".coda");
+            if (!file.exists())
+                file.createNewFile();
+            
+            fos = new FileOutputStream(file);
+            fos.write(dataArray);
+            fos.close();
+        }
+        catch (Exception ex) {
+            System.err.println("[ChunkOwn] Error when saving Chunk Snapshot...");
+            ex.printStackTrace();
+        }
+    }
+    
+    public static void revertChunk(Chunk chunk) {
+        revertChunk(chunk.getWorld(), chunk.getX(), chunk.getZ());
+    }
+    
+    public static void revertChunk(World world, int chunkX, int chunkZ) {
+        if (!revertChunks)
+            return;
+        
+        try {
+            File file = new File("plugins/ChunkOwn/Chunk Snapshots/"+world.getName()+"/"+chunkX+"-"+chunkZ+".cota");
+            if (!file.exists()) {
+                System.out.println("[ChunkOwn] Unable to revert Chunk '"+world.getName()+","+chunkX+","+chunkZ+" because no snapshot was found.");
+                return;
+            }
+            
+            int length = (int)file.length();
+            
+            byte[] typeArray = new byte[length];
+            byte[] dataArray = new byte[length];
+            
+            InputStream is = new FileInputStream(file);
+            
+            int offset = 0;
+            int numRead = 0;
+            while (offset < length && (numRead = is.read(typeArray, offset, length - offset)) >= 0)
+                offset += numRead;
+
+            // Ensure all the bytes have been read in
+            if (offset < length)
+                throw new IOException("Could not completely read file "+file.getName());
+
+            // Close the input stream and return bytes
+            is.close();
+            
+            file = new File("plugins/ChunkOwn/Chunk Snapshots/"+world.getName()+"/"+chunkX+"-"+chunkZ+".coda");
+            if (!file.exists()) {
+                System.out.println("[ChunkOwn] Unable to revert Chunk '"+world.getName()+","+chunkX+","+chunkZ+" because no snapshot was found.");
+                return;
+            }
+            
+            is = new FileInputStream(file);
+            
+            offset = 0;
+            numRead = 0;
+            while (offset < length && (numRead = is.read(dataArray, offset, length - offset)) >= 0)
+                offset += numRead;
+
+            // Ensure all the bytes have been read in
+            if (offset < length)
+                throw new IOException("Could not completely read file "+file.getName());
+
+            // Close the input stream and return bytes
+            is.close();
+            
+            int lowerLimit = 128 - (length / 256);
+
+            int index = 0;
+
+            int x = 16 * chunkX;
+            int z = 16 * chunkZ;
+
+            for (int i = 0; i < 16; i++)
+                for (int j = 0; j < 16; j++)
+                    for (int y = 127; y >= lowerLimit; y--) {
+                        Block block = world.getBlockAt(x + i, y, z + j);
+                        block.setTypeIdAndData((int)typeArray[index], dataArray[index], true);
+                        
+                        index++;
+                    }
+            
+            file.delete();
+            new File("plugins/ChunkOwn/Chunk Snapshots/"+world.getName()+"/"+chunkX+"-"+chunkZ+".cota").delete();
+        }
+        catch (Exception ex) {
+            System.err.println("[ChunkOwn] Error when reverting Chunk from Snapshot...");
+            ex.printStackTrace();
+        }
     }
 }

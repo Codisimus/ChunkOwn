@@ -1,6 +1,7 @@
 package com.codisimus.plugins.chunkown.listeners;
 
 import com.codisimus.plugins.chunkown.ChunkOwn;
+import org.bukkit.block.Block;
 import org.bukkit.event.block.*;
 
 /**
@@ -52,6 +53,18 @@ public class BlockEventListener extends BlockListener {
     public void onBlockSpread (BlockSpreadEvent event) {
         if (!ChunkOwn.canBuild(null, event.getBlock()))
             event.setCancelled(true);
+    }
+    
+    /**
+     * Blocks within an OwnedChunk cannot be effected by pistons
+     * 
+     * @param event The BlockPistonExtendEvent that occurred
+     */
+    @Override
+    public void onBlockPistonExtend (BlockPistonExtendEvent event) {
+        for (Block block: event.getBlocks())
+            if (!ChunkOwn.canBuild(null, block))
+                event.setCancelled(true);
     }
 
     /**

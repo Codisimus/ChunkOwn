@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import org.bukkit.Chunk;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -173,6 +172,7 @@ public class CommandListener implements CommandExecutor {
         //Increment the ChunkCounter of the Player
         ChunkOwn.chunkCounter.put(ownedChunk.owner, owned + 1);
         
+        ChunkOwn.saveSnapshot(chunk);
         markCorners(chunk);
         ChunkOwn.save();
     }
@@ -473,6 +473,7 @@ public class CommandListener implements CommandExecutor {
                             else
                                 Econ.sell(player);
                             
+                            ownedChunk.revert();
                         }
                     }
                     
@@ -494,37 +495,47 @@ public class CommandListener implements CommandExecutor {
      * @param chunk The given Chunk
      */
     public static void markCorners(Chunk chunk) {
-        //Get the highest Block (should be empty) at the South-West corner
-        Block block = chunk.getBlock(0, 127, 0);
-        //Move down until a non-empty Block is found
-        while (block.getTypeId() == 0)
-            block = block.getRelative(BlockFace.DOWN);
-        //Change the empty Block just above the Block found
-        block.getRelative(BlockFace.UP).setTypeId(cornerID);
-        
-        //Get the highest Block (should be empty) at the South-East corner
-        block = chunk.getBlock(0, 127, 15);
-        //Move down until a non-empty Block is found
-        while (block.getTypeId() == 0)
-            block = block.getRelative(BlockFace.DOWN);
-        //Change the empty Block just above the Block found
-        block.getRelative(BlockFace.UP).setTypeId(cornerID);
-        
-        //Get the highest Block (should be empty) at the North-West corner
-        block = chunk.getBlock(15, 127, 0);
-        //Move down until a non-empty Block is found
-        while (block.getTypeId() == 0)
-            block = block.getRelative(BlockFace.DOWN);
-        //Change the empty Block just above the Block found
-        block.getRelative(BlockFace.UP).setTypeId(cornerID);
-        
-        //Get the highest Block (should be empty) at the North-East corner
-        block = chunk.getBlock(15, 127, 15);
-        //Move down until a non-empty Block is found
-        while (block.getTypeId() == 0)
-            block = block.getRelative(BlockFace.DOWN);
-        //Change the empty Block just above the Block found
-        block.getRelative(BlockFace.UP).setTypeId(cornerID);
+        for (int x = 0; x <= 15; x = x + 15)
+            for (int z = 0; z <= 15; z = z + 15) {
+                int y = 126;
+                
+                Block block = chunk.getBlock(x, y, z);
+                while (y >= 0) {
+                    switch(block.getType()) {
+                        case LEAVES: //Fall through
+                        case AIR: y--; break;
+                        
+                        case SAPLING: //Fall through
+                        case LONG_GRASS: //Fall through
+                        case DEAD_BUSH: //Fall through
+                        case YELLOW_FLOWER: //Fall through
+                        case RED_ROSE: //Fall through
+                        case BROWN_MUSHROOM: //Fall through
+                        case RED_MUSHROOM: //Fall through
+                        case SNOW:
+                            block.setTypeId(cornerID);
+                            y = -1;
+                            break;
+                        
+                        case BED_BLOCK: //Fall through
+                        case POWERED_RAIL: //Fall through
+                        case DETECTOR_RAIL: //Fall through
+                        case RAILS: //Fall through
+                        case STONE_PLATE: //Fall through
+                        case WOOD_PLATE:
+                            block.getRelative(0, 2, 0).setTypeId(cornerID);
+                            y = -1;
+                            break;
+                        
+                        default:
+                            block.getRelative(0, 1, 0).setTypeId(cornerID);
+                            y = -1;
+                            break;
+                    }
+                    
+                    block = block.getRelative(0, -1, 0);
+                }
+            }
     }
     
     /**
@@ -535,7 +546,7 @@ public class CommandListener implements CommandExecutor {
     public static void sendHelp(Player player) {
         player.sendMessage("§e     ChunkOwn Help Page:");
         player.sendMessage("§2/chunk buy§b Purchase the current chunk for "+Econ.format(Econ.getPrice(player.getName())));
-        player.sendMessage("§2/chunk sell§b Sell the current chunk for "+Econ.format(Econ.getPrice(player.getName())));
+        player.sendMessage("§2/chunk sell§b Sell the current chunk for "+Econ.format(Econ.sellPrice));
         player.sendMessage("§2/chunk preview§b Preview the current chunk's boundaries");
         player.sendMessage("§2/chunk list§b List locations of owned Chunks");
         player.sendMessage("§2/chunk info§b List Owner and CoOwners of current Chunk");
