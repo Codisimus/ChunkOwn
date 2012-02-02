@@ -35,6 +35,7 @@ public class ChunkOwn extends JavaPlugin {
     public static int groupSize;
     private static int disownTime;
     private static boolean revertChunks;
+    private boolean disablePistons;
     public static Properties lastDaySeen;
 
     @Override
@@ -148,6 +149,8 @@ public class ChunkOwn extends JavaPlugin {
             
             revertChunks = Boolean.parseBoolean(loadValue("RevertChunks"));
             
+            disablePistons = Boolean.parseBoolean(loadValue("DisableUseOfPistonsInOwnedChunks"));
+            
             doNotOwnMsg = format(loadValue("DoNotOwnMessage"));
             CommandListener.permissionMsg = format(loadValue("PermissionMessage"));
             CommandListener.claimedMsg = format(loadValue("AlreadyClaimedMessage"));
@@ -200,7 +203,8 @@ public class ChunkOwn extends JavaPlugin {
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_IGNITE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Highest, this);
-        pm.registerEvent(Type.BLOCK_PISTON_EXTEND, blockListener, Priority.Highest, this);
+        if (disablePistons)
+            pm.registerEvent(Type.BLOCK_PISTON_EXTEND, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.SIGN_CHANGE, blockListener, Priority.Highest, this);
         pm.registerEvent(Type.PAINTING_PLACE, entityListener, Priority.Highest, this);
         pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.Highest, this);
