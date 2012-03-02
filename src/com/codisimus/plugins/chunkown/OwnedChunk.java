@@ -22,6 +22,17 @@ public class OwnedChunk {
     /**
      * Constructs a new OwnedChunk
      * 
+     * @param chunk The chunk that the OwnedChunks represents
+     */
+    public OwnedChunk(Chunk chunk) {
+        this.world = chunk.getWorld().getName();
+        this.x = chunk.getX();
+        this.z = chunk.getZ();
+    }
+    
+    /**
+     * Constructs a new OwnedChunk
+     * 
      * @param x The x-coordinate of the Chunk
      * @param z The z-coordinate of the Chunk
      * @param owner The name of the owner of the Chunk
@@ -57,33 +68,43 @@ public class OwnedChunk {
     /**
      * Returns true if there are no neighboring Chunks with the same Owner
      * 
-     * @param ownedChunks The list of Chunks to check for neighbors
      * @return True if there are no neighboring Chunks with the same Owner
      */
-    public boolean isLoner(LinkedList<Chunk> ownedChunks) {
-        for (Chunk chunk: ownedChunks) {
-            int a = chunk.getX();
-            int c = chunk.getZ();
-            
-            if (a == x) {
-                if (c == z + 1 || c == z - 1)
-                    if (chunk.getWorld().getName().equals(world))
-                        return false;
-            }
-            else if (c == z)
-                if (a == x + 1 || a == x - 1)
-                    if (chunk.getWorld().getName().equals(world))
-                        return false;
-        }
+    public boolean isLoner() {
+        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(world, x, z + 1);
+        if (ownedChunk != null && ownedChunk.owner.equals(owner))
+            return true;
         
-        return true;
+        ownedChunk = ChunkOwn.findOwnedChunk(world, x, z - 1);
+        if (ownedChunk != null && ownedChunk.owner.equals(owner))
+            return true;
+        
+        ownedChunk = ChunkOwn.findOwnedChunk(world, x + 1, z);
+        if (ownedChunk != null && ownedChunk.owner.equals(owner))
+            return true;
+        
+        ownedChunk = ChunkOwn.findOwnedChunk(world, x - 1, z);
+        return ownedChunk != null && ownedChunk.owner.equals(owner);
     }
     
+    /**
+     * Saves a snapshot of this Chunk
+     * 
+     */
     public void saveSnapshot() {
-        ChunkOwn.saveSnapshot(ChunkOwn.server.getWorld(world), x, z);
+        ChunkOwn.saveSnapshot(world, x, z);
     }
     
+    /**
+     * Reverts Chunk back to it's saved snapshot
+     * 
+     */
     public void revert() {
-        ChunkOwn.revertChunk(ChunkOwn.server.getWorld(world), x, z);
+        ChunkOwn.revertChunk(world, x, z);
+    }
+    
+    @Override
+    public String toString() {
+        return "Chunk @ world="+world+" x="+(x*16+8)+" z="+(z*16+8);
     }
 }

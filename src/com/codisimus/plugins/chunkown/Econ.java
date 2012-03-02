@@ -10,14 +10,10 @@ import org.bukkit.entity.Player;
  */
 public class Econ {
     public static Economy economy;
-    public static double buyPrice;
-    public static double sellPrice;
-    public static double multiplier;
-    static String insufficientFundsMsg;
-    static String buyMsg;
-    static String sellMsg;
-    static String adminSellMsg;
-    static String adminSoldMsg;
+    static double buyPrice;
+    static double sellPrice;
+    static double buyMultiplier;
+    static double sellMultiplier;
 
     /**
      * Charges a Player a given amount of money, which goes to a Player/Bank
@@ -29,19 +25,19 @@ public class Econ {
      */
     public static boolean buy(Player player) {
         String name = player.getName();
-        double price = getPrice(name);
+        double price = getBuyPrice(name);
         
         if (economy != null) {
             //Cancel if the Player cannot afford the transaction
             if (!economy.has(name, price)) {
-                player.sendMessage(insufficientFundsMsg.replace("<price>", economy.format(price)));
+                player.sendMessage(ChunkOwnMessages.insufficientFunds.replace("<price>", economy.format(price)));
                 return false;
             }
 
             economy.withdrawPlayer(name, price);
         }
         
-        player.sendMessage(buyMsg.replace("<price>", economy.format(price)));
+        player.sendMessage(ChunkOwnMessages.buy.replace("<price>", economy.format(price)));
         return true;
     }
     
@@ -51,9 +47,12 @@ public class Econ {
      * @param player The Player who is selling
      */
     public static void sell(Player player) {
-        sell(player.getName());
+        String name = player.getName();
+        String price = economy.format(getSellPrice(name));
         
-        player.sendMessage(sellMsg.replace("<price>", economy.format(sellPrice)));
+        sell(name);
+        
+        player.sendMessage(ChunkOwnMessages.sell.replace("<price>", price));
     }
     
     /**
@@ -63,7 +62,7 @@ public class Econ {
      */
     public static void sell(String name) {
         if (economy != null)
-            economy.depositPlayer(name, sellPrice);
+            economy.depositPlayer(name, getSellPrice(name));
     }
     
     /**
@@ -74,13 +73,14 @@ public class Econ {
      */
     public static void sell(Player admin, String owner) {
         sell(owner);
+        String price = economy.format(getSellPrice(owner));
 
         //Notify the Seller
         Player seller = ChunkOwn.server.getPlayer(owner);
         if (seller != null)
-            seller.sendMessage(adminSoldMsg.replace("<price>", economy.format(sellPrice)));
+            seller.sendMessage(ChunkOwnMessages.adminSold.replace("<price>", price));
         
-        admin.sendMessage(adminSellMsg.replace("<price>", economy.format(sellPrice)));
+        admin.sendMessage(ChunkOwnMessages.adminSell.replace("<price>", price));
     }
     
     /**
@@ -102,7 +102,10 @@ public class Econ {
      * @param player The given Player
      * @return The calculated BuyPrice
      */
-    public static double getPrice(String player) {
+    public static double getBuyPrice(String player) {
+        if (ChunkOwn.hasPermission(player, "free"))
+            return 0;
+        
         int owned = 0;
         
         //Retrieve the ChunkCounter value of the Player
@@ -110,6 +113,26 @@ public class Econ {
         if (object != null)
             owned = (Integer)object;
         
-        return buyPrice * Math.pow(multiplier, owned);
+        return buyPrice * Math.pow(buyMultiplier, owned);
+    }
+    
+    /**
+     * Returns the SellPrice for the given Player
+     * 
+     * @param player The given Player
+     * @return The calculated SellPrice
+     */
+    public static double getSellPrice(String player) {
+        if (ChunkOwn.hasPermission(player, "free"))
+            return 0;
+        
+        int owned = 0;
+        
+        //Retrieve the ChunkCounter value of the Player
+        Object object = ChunkOwn.chunkCounter.get(player);
+        if (object != null)
+            owned = (Integer)object;
+        
+        return sellPrice * Math.pow(sellMultiplier, owned);
     }
 }
