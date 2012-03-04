@@ -1,6 +1,7 @@
 package com.codisimus.plugins.chunkown;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import org.bukkit.Chunk;
 import org.bukkit.block.Block;
@@ -142,15 +143,6 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         
         ownedChunk.owner = name;
-
-        //Retrieve the ChunkCounter value of the Player
-        owned = 0;
-        Object object = ChunkOwn.chunkCounter.get(player.getName());
-        if (object != null)
-            owned = (Integer)object;
-        
-        //Increment the ChunkCounter of the Player
-        ChunkOwn.chunkCounter.put(ownedChunk.owner, owned + 1);
         
         ChunkOwn.saveSnapshot(chunk);
         markCorners(chunk);
@@ -419,7 +411,12 @@ public class ChunkOwnCommand implements CommandExecutor {
      * @param player The given Player
      */
     private static void clear(Player player, String name) {
-        for (OwnedChunk ownedChunk: ChunkOwn.getOwnedChunks())
+        Iterator <OwnedChunk> itr = ChunkOwn.getOwnedChunks().iterator();
+        OwnedChunk ownedChunk;
+        
+        while (itr.hasNext()) {
+            ownedChunk = itr.next();
+            
             //Sell the Chunk if it is owned by the given Player
             if (ownedChunk.owner.equals(name)) {
                 if (player == null)
@@ -429,9 +426,7 @@ public class ChunkOwnCommand implements CommandExecutor {
 
                 ChunkOwn.removeOwnedChunk(ownedChunk);
             }
-        
-        //Reset the ChunkCounter of the Player to 0
-        ChunkOwn.chunkCounter.put(name, 0);
+        }
         
         ChunkOwn.saveAll();
     }
