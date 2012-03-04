@@ -509,7 +509,11 @@ public class ChunkOwn extends JavaPlugin {
      */
     public static void addOwnedChunk(OwnedChunk ownedChunk) {
         ownedChunk.saveSnapshot();
-        chunkCounter.put(ownedChunk.owner, chunkCounter.get(ownedChunk.owner) + 1);
+        
+        if (chunkCounter.containsKey(ownedChunk.owner))
+            chunkCounter.put(ownedChunk.owner, chunkCounter.get(ownedChunk.owner) + 1);
+        else
+            chunkCounter.put(ownedChunk.owner, 1);
         
         World world = server.getWorld(ownedChunk.world);
         Chunk chunk = world.getChunkAt(ownedChunk.x, ownedChunk.z);
