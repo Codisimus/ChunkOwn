@@ -52,7 +52,8 @@ public class ChunkOwnListener implements Listener {
     @EventHandler (priority = EventPriority.HIGHEST)
     public void onPlayerInteract (PlayerInteractEvent event) {
         //Return if the event was not opening a Chest
-        if (event.getMaterial() != Material.CHEST || event.getAction() != Action.RIGHT_CLICK_BLOCK)
+        if (event.getMaterial() != Material.CHEST && event.getAction() != Action.RIGHT_CLICK_BLOCK &&
+                event.getClickedBlock().getType() != Material.LEVER && event.getClickedBlock().getType() != Material.STONE_BUTTON)
             return;
         
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getClickedBlock()))
@@ -207,4 +208,5 @@ public class ChunkOwnListener implements Listener {
         if (!ChunkOwn.canBuild(player, event.getVehicle().getLocation().getBlock()))
             event.setCancelled(true);
     }
+    
 }
