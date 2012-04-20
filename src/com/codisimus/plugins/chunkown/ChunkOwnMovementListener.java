@@ -40,7 +40,8 @@ public class ChunkOwnMovementListener implements Listener {
         String name = player.getName();
         
         ChunkOwner owner = inChunk.get(player);
-        if (owner.alarm)
+        
+        if (owner != null && owner.alarm)
             owner.sendMessage(name+" left your owned property");
         
         ChunkOwner walker = ChunkOwn.findOwner(name);
