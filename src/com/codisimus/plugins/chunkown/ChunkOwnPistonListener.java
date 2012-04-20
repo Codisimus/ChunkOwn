@@ -7,21 +7,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 
 /**
- * Listens for griefing events
+ * Block Pistons within Owned Chunks which have protection
  * 
  * @author Codisimus
  */
 public class ChunkOwnPistonListener implements Listener {
-    
-    /**
-     * Blocks within an OwnedChunk cannot be effected by pistons
-     * 
-     * @param event The BlockPistonExtendEvent that occurred
-     */
     @EventHandler (priority = EventPriority.HIGHEST)
-    public void onBlockPistonExtend (BlockPistonExtendEvent event) {
-        for (Block block: event.getBlocks())
-            if (!ChunkOwn.canBuild(null, block))
+    public void onEntityExplode(BlockPistonExtendEvent event) {
+        for (Block block: event.getBlocks()) {
+            OwnedChunk chunk = ChunkOwn.findOwnedChunk(block);
+            if (chunk != null && chunk.owner.disablePistons);
                 event.setCancelled(true);
+        }
     }
 }

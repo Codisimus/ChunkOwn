@@ -1,9 +1,12 @@
 package com.codisimus.plugins.chunkown;
 
+import com.codisimus.plugins.chunkown.ChunkOwner.AddOn;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import org.bukkit.Chunk;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -17,10 +20,11 @@ import org.bukkit.entity.Player;
  */
 public class ChunkOwnCommand implements CommandExecutor {
     public static String command;
-    private static enum Action { BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW }
+    private static enum Action { HELP, BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW }
     public static long cooldown;
     public static int cornerID;
     private Map<String, Long> playerLastPreview;
+    private static LinkedList<Block> previewBlocks = new LinkedList<Block>();
     
     public ChunkOwnCommand() {
         playerLastPreview = new HashMap<String, Long>();
@@ -43,6 +47,12 @@ public class ChunkOwnCommand implements CommandExecutor {
         
         Player player = (Player)sender;
         
+        //Cancel if the Player is in a disabled World
+        if (!ChunkOwn.enabledInWorld(player.getWorld())) {
+            player.sendMessage("ChunkOwn is disabled in your current World");
+            return true;
+        }
+        
         //Display help page if the Player did not add any arguments
         if (args.length == 0) {
             sendHelp(player);
@@ -54,31 +64,85 @@ public class ChunkOwnCommand implements CommandExecutor {
         try {
             action = Action.valueOf(args[0].toUpperCase());
         }
-        catch (Exception notEnum) {
+        catch (IllegalArgumentException notEnum) {
             sendHelp(player);
             return true;
         }
         
         //Execute the correct command
         switch (action) {
-            case BUY: buy(player); return true;
+            case BUY:
+                switch (args.length) {
+                    case 1: buy(player); return true;
+                        
+                    case 2:
+                        try {
+                            buyAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
+                        }
+                        catch (IllegalArgumentException notAddOn) {
+                            player.sendMessage(args[1]+" is not a valid Add-on");
+                        }
+                        return true;
+                        
+                    default: sendHelp(player); return true;
+                } 
                 
-            case SELL: sell(player); return true;
+            case SELL:
+                switch (args.length) {
+                    case 1: sell(player); return true;
+                        
+                    case 2:
+                        try {
+                            sellAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
+                        }
+                        catch (IllegalArgumentException notAddOn) {
+                            player.sendMessage(args[1]+" is not a valid Add-on");
+                        }
+                        return true;
+                        
+                    default: sendHelp(player); return true;
+                } 
                 
-            case LIST: list(player); return true;
+            case LIST:
+                switch (args.length) {
+                    case 1: list(player); return true;
+                    
+                    case 2:
+                        if (args[1].equals("addons"))
+                            listAddOns(player);
+                        else
+                            sendAddOnHelp(player);
+                        return true;
+                    
+                    default: sendHelp(player); return true;
+                }
                 
             case INFO: info(player); return true;
                 
             case COOWNER:
-                if (args.length == 4)
-                    coowner(player, args[2], args[1], args[3]);
-                else
-                    sendHelp(player);
-                return true;
+                switch (args.length) {
+                    case 4: chunkCoowner(player, args[2], args[1], args[3]); return true;
+                        
+                    case 5:
+                        if (args[1].equals("all"))
+                            coowner(player, args[3], args[2], args[4]);
+                        else
+                            sendHelp(player);
+                        return true;
+                        
+                    default: sendHelp(player); return true;
+                }
                 
             case CLEAR: clear(player); return true;
                 
             case PREVIEW: preview(player); return true;
+            
+            case HELP:
+                if (args.length == 2 && args[1].equals("addons"))
+                    sendAddOnHelp(player);
+                else
+                    sendHelp(player);
+                return true;
                 
             default: sendHelp(player); return true;
         }
@@ -106,30 +170,22 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         }
         
-        ownedChunk = new OwnedChunk(chunk);
-
-        int limit = ChunkOwn.getOwnLimit(player);
-        int owned = 0;
+        String name = player.getName();
         
         //Check if the Player is limited
-        if (limit != -1) {
-            //Retrieve the ChunkCounter value of the Player
-            if (ChunkOwn.chunkCounter.containsKey(player.getName()))
-                owned = ChunkOwn.chunkCounter.get(player.getName());
-            
+        int limit = ChunkOwn.getOwnLimit(player);
+        if (limit != -1)
             //Cancel if the Player owns their maximum limit
-            if (owned >= limit) {
+            if (ChunkOwn.getChunkCounter(name) >= limit) {
                 player.sendMessage(ChunkOwnMessages.limit);
                 return;
             }
-        }
         
-        String name = player.getName();
         
         //Check if a group size is required
         if (ChunkOwn.groupSize > 1) {
             //Check if the Chunk is a loner (not connected to other owned Chunks
-            if (ownedChunk.isLoner())
+            if (isLoner(chunk, name))
                 if (!ChunkOwn.canBuyLoner(ChunkOwn.getOwnedChunks(name))) {
                     player.sendMessage(ChunkOwnMessages.groupLand.replace("<MinimumGroupSize>", String.valueOf(ChunkOwn.groupSize)));
                     return;
@@ -142,11 +198,56 @@ public class ChunkOwnCommand implements CommandExecutor {
         else if(!Econ.buy(player))
             return;
         
-        ownedChunk.owner = name;
-        
-        ChunkOwn.saveSnapshot(chunk);
         markCorners(chunk);
-        ChunkOwn.addOwnedChunk(ownedChunk);
+        ChunkOwn.addOwnedChunk(new OwnedChunk(chunk, name));
+    }
+    
+    /**
+     * Gives the Player the Given Add-on
+     * 
+     * @param player The Player buying the Chunk
+     */
+    public static void buyAddOn(Player player, AddOn addOn) {
+        //Cancel if the Player does not have permission to buy the Add-on
+        if (!ChunkOwn.hasPermission(player, addOn)) {
+            player.sendMessage(ChunkOwnMessages.permission);
+            return;
+        }
+        
+        //Retrieve the ChunkOwner for the Player
+        ChunkOwner owner = ChunkOwn.getOwner(player.getName());
+        
+        //Cancel if the Player already has the Add-on
+        if (owner.hasAddOn(addOn)) {
+            player.sendMessage("You already have that Add-on enabled");
+            return;
+        }
+        
+        //Cancel if the Player could not afford the transaction
+        if(!Econ.charge(player, Econ.getBuyPrice(addOn)))
+            return;
+        
+        owner.setAddOn(addOn, true);
+    }
+    
+    /**
+     * Removes the given Add-on from the Player's ChunkOwner
+     * 
+     * @param player The Player buying the Chunk
+     */
+    public static void sellAddOn(Player player, AddOn addOn) {
+        //Retrieve the ChunkOwner for the Player
+        ChunkOwner owner = ChunkOwn.getOwner(player.getName());
+        
+        //Cancel if the Player already has the Add-on
+        if (!owner.hasAddOn(addOn)) {
+            player.sendMessage("You already have that Add-on disabled");
+            return;
+        }
+        
+        
+        Econ.refund(player, Econ.getSellPrice(addOn));
+        owner.setAddOn(addOn, true);
     }
     
     /**
@@ -175,32 +276,36 @@ public class ChunkOwnCommand implements CommandExecutor {
         
         //Retrieve the OwnedChunk that the Player is in
         Chunk chunk = player.getLocation().getBlock().getChunk();
+        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(chunk);
 
-        if (ChunkOwn.findOwnedChunk(chunk) != null) {
-            // If an OwnedChunk is found, the chunk is already claimed
+        //If the owner of the OwnedChunk is not blank then the Chunk is already claimed
+        if (ownedChunk != null) {
             player.sendMessage(ChunkOwnMessages.claimed);
             return;
         }
 
-        int limit = ChunkOwn.getOwnLimit(player);
-        int owned = 0;
+        String name = player.getName();
         
-        //Don't check how many are owned if the Player is not limited
-        if (limit != -1) {
-            //Retrieve the ChunkCounter value of the Player
-            Object object = ChunkOwn.chunkCounter.get(player.getName());
-            if (object != null)
-                owned = (Integer)object;
-            
+        //Check if the Player is limited
+        int limit = ChunkOwn.getOwnLimit(player);
+        if (limit != -1)
             //Cancel if the Player owns their maximum limit
-            if (owned >= limit) {
+            if (ChunkOwn.getChunkCounter(name) >= limit) {
                 player.sendMessage(ChunkOwnMessages.limit);
                 return;
             }
+        
+        //Check if a group size is required
+        if (ChunkOwn.groupSize > 1) {
+            //Check if the Chunk is a loner (not connected to other owned Chunks
+            if (isLoner(chunk, name))
+                if (!ChunkOwn.canBuyLoner(ChunkOwn.getOwnedChunks(name))) {
+                    player.sendMessage(ChunkOwnMessages.groupLand.replace("<MinimumGroupSize>", String.valueOf(ChunkOwn.groupSize)));
+                    return;
+                }
         }
         
         markCorners(chunk);
-        
         playerLastPreview.put(player.getName(), System.currentTimeMillis() / 1000);
     }
     
@@ -227,9 +332,9 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
         
         //Cancel if the OwnedChunk is owned by someone else
-        if (!ownedChunk.owner.equals(player.getName()))
+        if (!ownedChunk.owner.name.equals(player.getName()))
             if (ChunkOwn.hasPermission(player, "admin"))
-                Econ.sell(player, ownedChunk.owner);
+                Econ.sell(player, ownedChunk.owner.name);
             else {
                 player.sendMessage(ChunkOwnMessages.doNotOwn);
                 return;
@@ -254,12 +359,7 @@ public class ChunkOwnCommand implements CommandExecutor {
         
         String name = player.getName();
         
-        //Retrieve the ChunkCounter value to display to the Player
-        int owned = 0;
-        Object object = ChunkOwn.chunkCounter.get(name);
-        if (object != null)
-            owned = (Integer)object;
-        player.sendMessage("Number of Chunks owned: "+owned);
+        player.sendMessage("Number of Chunks owned: "+ChunkOwn.getChunkCounter(name));
 
         //Retrieve the ownLimit to display to the Player
         int ownLimit = ChunkOwn.getOwnLimit(player);
@@ -267,8 +367,48 @@ public class ChunkOwnCommand implements CommandExecutor {
             player.sendMessage("Total amount you may own: "+ownLimit);
         
         for (OwnedChunk ownedChunk: ChunkOwn.getOwnedChunks())
-            if (ownedChunk.owner.equals(name))
+            if (ownedChunk.owner.name.equals(name))
                 player.sendMessage(ownedChunk.toString());
+    }
+    
+    /**
+     * Display to the Player all of the Add-ons that they own
+     * 
+     * @param player The Player requesting the list
+     */
+    public static void listAddOns(Player player) {
+        ChunkOwner owner = ChunkOwn.getOwner(player.getName());
+        
+        String list = "Enabled Add-ons: ";
+        if (Econ.blockPvP != -2 && owner.blockPvP)
+            list = list.concat("BlockPvP ,");
+        if (Econ.blockPvE != -2 && owner.blockPvE)
+            list = list.concat("BlockPvE ,");
+        if (Econ.blockExplosions != -2 && owner.blockExplosions)
+            list = list.concat("BlockExplosions ,");
+        if (Econ.lockChests != -2 && owner.lockChests)
+            list = list.concat("LockChests ,");
+        if (Econ.lockDoors != -2 && owner.lockDoors)
+            list = list.concat("LockDoors ,");
+        if (Econ.disableButtons != -2 && owner.disableButtons)
+            list = list.concat("DisableButtons ,");
+        if (Econ.disablePistons != -2 && owner.disablePistons)
+            list = list.concat("DisablePistons ,");
+        if (Econ.alarm != -2 && owner.alarm)
+            list = list.concat("AlarmSystem ,");
+        if (Econ.heal != -2 && owner.heal)
+            list = list.concat("Heal ,");
+        if (Econ.feed != -2 && owner.feed)
+            list = list.concat("Feed ,");
+        if (Econ.notify != -2 && owner.notify)
+            list = list.concat("Notify ,");
+        
+        player.sendMessage(list.substring(0, list.length()-2));
+        
+        if (ChunkOwn.defaultAutoOwnBlock != -1) {
+            Material material = Material.getMaterial(owner.autoOwnBlock);
+            player.sendMessage("You will automattically buy a Chunk if you place a "+material.toString()+" in it");
+        }
     }
     
     /**
@@ -311,14 +451,14 @@ public class ChunkOwnCommand implements CommandExecutor {
     }
     
     /**
-     * Manages CoOwnership of the given Chunk if the Player is the Owner
+     * Manages Co-Ownership of the given Chunk if the Player is the Owner
      * 
      * @param player The given Player who may be the Owner
      * @param type The given type: 'player' or 'group'
      * @param action The given action: 'add' or 'remove'
-     * @param coOwner The given CoOwner
+     * @param coOwner The given Co-Owner
      */
-    public static void coowner(Player player, String type, String action, String coOwner) {
+    public static void chunkCoowner(Player player, String type, String action, String coOwner) {
         //Cancel if the Player does not have permission to use the command
         if (!ChunkOwn.hasPermission(player, "coowner")) {
             player.sendMessage(ChunkOwnMessages.permission);
@@ -336,7 +476,7 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
 
         //Cancel if the OwnedChunk is owned by someone else
-        if (!ownedChunk.owner.equals(player.getName())) {
+        if (!ownedChunk.owner.name.equals(player.getName())) {
             player.sendMessage(ChunkOwnMessages.doNotOwn);
             return;
         }
@@ -385,6 +525,66 @@ public class ChunkOwnCommand implements CommandExecutor {
     }
     
     /**
+     * Manages Co-Ownership of the ChunkOwner of the Player
+     * 
+     * @param player The given Player who may be the Owner
+     * @param type The given type: 'player' or 'group'
+     * @param action The given action: 'add' or 'remove'
+     * @param coOwner The given Co-Owner
+     */
+    public static void coowner(Player player, String type, String action, String coOwner) {
+        //Cancel if the Player does not have permission to use the command
+        if (!ChunkOwn.hasPermission(player, "coowner")) {
+            player.sendMessage(ChunkOwnMessages.permission);
+            return;
+        }
+        
+        ChunkOwner owner = ChunkOwn.getOwner(player.getName());
+
+        //Determine the command to execute
+        if (type.equals("player"))
+            if (action.equals("add")) {
+                //Cancel if the Player is already a CoOwner
+                if (owner.coOwners.contains(coOwner)) {
+                    player.sendMessage(coOwner+" is already a CoOwner");
+                    return;
+                }
+                
+                owner.coOwners.add(coOwner);
+                player.sendMessage(coOwner+" added as a CoOwner");
+            }
+            else if (action.equals("remove"))
+                owner.coOwners.remove(coOwner);
+            else {
+                sendHelp(player);
+                return;
+            }
+        else if (type.equals("group"))
+            if (action.equals("add")) {
+                //Cancel if the Group is already a CoOwner
+                if (owner.groups.contains(coOwner)) {
+                    player.sendMessage(coOwner+" is already a CoOwner");
+                    return;
+                }
+                
+                owner.groups.add(coOwner);
+                player.sendMessage(coOwner+" added as a CoOwner");
+            }
+            else if (action.equals("remove"))
+                owner.groups.remove(coOwner);
+            else {
+                sendHelp(player);
+                return;
+            }
+        else {
+            sendHelp(player);
+            return;
+        }
+        
+        owner.save();
+    }
+    
+    /**
      * Removes all the Chunks that are owned by the given Player
      * A Chunk is owned buy a Player if the owner field is the Player's name
      * 
@@ -418,7 +618,7 @@ public class ChunkOwnCommand implements CommandExecutor {
             ownedChunk = itr.next();
             
             //Sell the Chunk if it is owned by the given Player
-            if (ownedChunk.owner.equals(name)) {
+            if (ownedChunk.owner.name.equals(name)) {
                 if (player == null)
                     Econ.sell(name);
                 else
@@ -429,6 +629,64 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
         
         ChunkOwn.saveAll();
+    }
+    
+    /**
+     * Displays the ChunkOwn Help Page to the given Player
+     *
+     * @param Player The Player needing help
+     */
+    public static void sendHelp(Player player) {
+        player.sendMessage("§e     ChunkOwn Help Page:");
+        player.sendMessage("§2/"+command+" help addons§b Display the Add-on Help Page");
+        player.sendMessage("§2/"+command+" buy§b Purchase the current chunk for "+Econ.format(Econ.getBuyPrice(player.getName())));
+        player.sendMessage("§2/"+command+" sell§b Sell the current chunk for "+Econ.format(Econ.getSellPrice(player.getName())));
+        player.sendMessage("§2/"+command+" preview§b Preview the current chunk's boundaries");
+        player.sendMessage("§2/"+command+" list§b List locations of owned Chunks");
+        player.sendMessage("§2/"+command+" info§b List Owner and CoOwners of current Chunk");
+        player.sendMessage("§2/"+command+" clear§b Sell all owned Chunks");
+        player.sendMessage("§2/"+command+" coowner [Action] [Type] [Name]§b Co-Owner for current Chunk");
+        player.sendMessage("§2/"+command+" coowner all [Action] [Type] [Name]§b Co-Owner for all Chunks");
+        player.sendMessage("§bAction = 'add' or 'remove'");
+        player.sendMessage("§bType = 'player' or 'group'");
+        player.sendMessage("§bName = The group name or the Player's name");
+    }
+    
+    /**
+     * Displays the Add-on Help Page to the given Player
+     *
+     * @param Player The Player needing help
+     */
+    public static void sendAddOnHelp(Player player) {
+        player.sendMessage("§e     Add-on Help Page:");
+        player.sendMessage("§2Add-ons apply to all Chunks that you own");
+        player.sendMessage("§2/"+command+" list addons§b List your current add-ons");
+        
+        //Display available Add-ons
+        if (ChunkOwn.hasPermission(player, AddOn.BLOCKPVP))
+            player.sendMessage("§2/"+command+" buy blockpvp§b No damage from Players: "+Econ.format(Econ.getBuyPrice(AddOn.BLOCKPVP)));
+        if (ChunkOwn.hasPermission(player, AddOn.BLOCKPVE))
+            player.sendMessage("§2/"+command+" buy blockpve§b No damage from Mobs: "+Econ.format(Econ.getBuyPrice(AddOn.BLOCKPVE)));
+        if (ChunkOwn.hasPermission(player, AddOn.BLOCKEXPLOSIONS))
+            player.sendMessage("§2/"+command+" buy blockexplosions§b No TNT/Creeper griefing: "+Econ.format(Econ.getBuyPrice(AddOn.BLOCKEXPLOSIONS)));
+        if (ChunkOwn.hasPermission(player, AddOn.LOCKCHESTS))
+            player.sendMessage("§2/"+command+" buy lockchests§b Players can't open Chests/Furnaces/Dispensers: "+Econ.format(Econ.getBuyPrice(AddOn.LOCKCHESTS)));
+        if (ChunkOwn.hasPermission(player, AddOn.LOCKDOORS))
+            player.sendMessage("§2/"+command+" buy lockdoors§b Players can't open Doors: "+Econ.format(Econ.getBuyPrice(AddOn.LOCKDOORS)));
+        if (ChunkOwn.hasPermission(player, AddOn.DISABLEBUTTONS))
+            player.sendMessage("§2/"+command+" buy disablebuttons§b Other Players can't use Buttons/Levers/Plates: "+Econ.format(Econ.getBuyPrice(AddOn.DISABLEBUTTONS)));
+        if (ChunkOwn.hasPermission(player, AddOn.DISABLEPISTONS))
+            player.sendMessage("§2/"+command+" buy disablepistons§b Pistons will no longer function: "+Econ.format(Econ.getBuyPrice(AddOn.DISABLEPISTONS)));
+        if (ChunkOwn.hasPermission(player, AddOn.ALARM))
+            player.sendMessage("§2/"+command+" buy alarm§b Be alerted when a Player enters your land: "+Econ.format(Econ.getBuyPrice(AddOn.ALARM)));
+        if (ChunkOwn.hasPermission(player, AddOn.HEAL))
+            player.sendMessage("§2/"+command+" buy heal§b Players gain half a heart every "+ChunkOwnMovementListener.rate+" seconds: "+Econ.format(Econ.getBuyPrice(AddOn.HEAL)));
+        if (ChunkOwn.hasPermission(player, AddOn.FEED))
+            player.sendMessage("§2/"+command+" buy feed§b Players gain half a food every "+ChunkOwnMovementListener.rate+" seconds: "+Econ.format(Econ.getBuyPrice(AddOn.FEED)));
+        if (ChunkOwn.hasPermission(player, AddOn.NOTIFY))
+            player.sendMessage("§2/"+command+" buy notify§b Be notified when you enter owned land: "+Econ.format(Econ.getBuyPrice(AddOn.NOTIFY)));
+        
+        player.sendMessage("§2/"+command+" sell [addon]§b Sell an addon for "+Econ.moneyBack+"% of its buy price");
     }
     
     /**
@@ -443,7 +701,11 @@ public class ChunkOwnCommand implements CommandExecutor {
                 
                 Block block = chunk.getBlock(x, y, z);
                 while (y >= 0) {
-                    switch(block.getType()) {
+                    //Do not stack cornerID Blocks
+                    if (block.getTypeId() == cornerID)
+                        break;
+                    
+                    switch (block.getType()) {
                         case LEAVES: //Fall through
                         case AIR: y--; break;
                         
@@ -477,25 +739,64 @@ public class ChunkOwnCommand implements CommandExecutor {
                     
                     block = block.getRelative(0, -1, 0);
                 }
+                
+                scheduleCooldown(block);
             }
     }
     
     /**
-     * Displays the ChunkOwn Help Page to the given Player
-     *
-     * @param Player The Player needing help
+     * Schedules the given preview Block to be removed after the cooldown
+     * 
+     * @param block The given preview Block
      */
-    public static void sendHelp(Player player) {
-        player.sendMessage("§e     ChunkOwn Help Page:");
-        player.sendMessage("§2/"+command+" buy§b Purchase the current chunk for "+Econ.format(Econ.getBuyPrice(player.getName())));
-        player.sendMessage("§2/"+command+" sell§b Sell the current chunk for "+Econ.format(Econ.getSellPrice(player.getName())));
-        player.sendMessage("§2/"+command+" preview§b Preview the current chunk's boundaries");
-        player.sendMessage("§2/"+command+" list§b List locations of owned Chunks");
-        player.sendMessage("§2/"+command+" info§b List Owner and CoOwners of current Chunk");
-        player.sendMessage("§2/"+command+" clear§b Sell all owned Chunks");
-        player.sendMessage("§2/"+command+" coowner [Action] [Type] [Name]");
-        player.sendMessage("§bAction = 'add' or 'remove'");
-        player.sendMessage("§bType = 'player' or 'group'");
-        player.sendMessage("§bName = The group name or the Player's name");
+    private static void scheduleCooldown(final Block block) {
+        previewBlocks.add(block);
+        
+        ChunkOwn.server.getScheduler().scheduleSyncDelayedTask(ChunkOwn.plugin, new Runnable() {
+            @Override
+            public void run() {
+                removeMarker(block);
+            }
+        }, cooldown);
+    }
+    
+    /**
+     * Removes the given preview Block
+     * 
+     * @param block The given preview Block
+     */
+    public static void removeMarker(Block block) {
+        if (previewBlocks.contains(block)) {
+            block.setTypeId(1);
+            previewBlocks.remove(block);
+        }
+    }
+    
+    /**
+     * Returns true if there are no neighboring Chunks with the given Owner
+     * 
+     * @param chunk The Chunk that may be a Loner
+     * @param player The Player who may own neighboring Chunks
+     * @return True if there are no neighboring Chunks with the given Owner
+     */
+    private static boolean isLoner(Chunk chunk, String player) {
+        String world = chunk.getWorld().getName();
+        int x = chunk.getX();
+        int z = chunk.getZ();
+        
+        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(world, x, z + 1);
+        if (ownedChunk != null && ownedChunk.owner.name.equals(player))
+            return true;
+        
+        ownedChunk = ChunkOwn.findOwnedChunk(world, x, z - 1);
+        if (ownedChunk != null && ownedChunk.owner.name.equals(player))
+            return true;
+        
+        ownedChunk = ChunkOwn.findOwnedChunk(world, x + 1, z);
+        if (ownedChunk != null && ownedChunk.owner.name.equals(player))
+            return true;
+        
+        ownedChunk = ChunkOwn.findOwnedChunk(world, x - 1, z);
+        return ownedChunk != null && ownedChunk.owner.name.equals(player);
     }
 }

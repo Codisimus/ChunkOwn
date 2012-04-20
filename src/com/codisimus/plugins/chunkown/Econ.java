@@ -1,5 +1,6 @@
 package com.codisimus.plugins.chunkown;
 
+import com.codisimus.plugins.chunkown.ChunkOwner.AddOn;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.entity.Player;
 
@@ -9,11 +10,25 @@ import org.bukkit.entity.Player;
  * @author Codisimus
  */
 public class Econ {
-    public static Economy economy;
+    static Economy economy;
     static double buyPrice;
     static double sellPrice;
     static double buyMultiplier;
     static double sellMultiplier;
+    static double moneyBack;
+    
+    /* Add-on Prices */
+    static double blockPvP;
+    static double blockPvE;
+    static double blockExplosions;
+    static double lockChests;
+    static double lockDoors;
+    static double disableButtons;
+    static double disablePistons;
+    static double alarm;
+    static double heal;
+    static double feed;
+    static double notify;
 
     /**
      * Charges a Player a given amount of money, which goes to a Player/Bank
@@ -39,6 +54,45 @@ public class Econ {
         
         player.sendMessage(ChunkOwnMessages.buy.replace("<price>", economy.format(price)));
         return true;
+    }
+    
+    /**
+     * Charges the Player the given amount of money
+     * 
+     * @param player The Player being charged
+     * @param amount The amount being charged
+     * @return true if the transaction was successful;
+     */
+    public static boolean charge(Player player, double amount) {
+        String name = player.getName();
+        
+        if (economy != null) {
+            //Cancel if the Player cannot afford the transaction
+            if (!economy.has(name, amount)) {
+                player.sendMessage("You must have "+economy.format(amount)+" to complete the transaction");
+                return false;
+            }
+
+            economy.withdrawPlayer(name, amount);
+        }
+        
+        player.sendMessage(economy.format(amount)+"has been withdrawn from your account");
+        return true;
+    }
+    
+    /**
+     * Refunds the Player the given amount of money
+     * 
+     * @param player The Player being refunded
+     * @param amount The amount being refunded
+     */
+    public static void refund(Player player, double amount) {
+        String name = player.getName();
+        
+        if (economy != null)
+            economy.depositPlayer(name, amount);
+        
+        player.sendMessage(economy.format(amount)+"has been refunded to your account");
     }
     
     /**
@@ -106,14 +160,7 @@ public class Econ {
         if (ChunkOwn.hasPermission(player, "free"))
             return 0;
         
-        int owned = 0;
-        
-        //Retrieve the ChunkCounter value of the Player
-        Object object = ChunkOwn.chunkCounter.get(player);
-        if (object != null)
-            owned = (Integer)object;
-        
-        return buyPrice * Math.pow(buyMultiplier, owned);
+        return buyPrice * Math.pow(buyMultiplier, ChunkOwn.getChunkCounter(player));
     }
     
     /**
@@ -126,13 +173,46 @@ public class Econ {
         if (ChunkOwn.hasPermission(player, "free"))
             return 0;
         
-        int owned = 0;
+        return sellPrice * Math.pow(sellMultiplier, ChunkOwn.getChunkCounter(player));
+    }
+    
+    /**
+     * Returns the BuyPrice for the given Add-on
+     * 
+     * @param addon The given Add-on
+     * @return The BuyPrice of the add-on or 0 if the price is -1
+     */
+    public static double getBuyPrice(AddOn addon) {
+        double price;
         
-        //Retrieve the ChunkCounter value of the Player
-        Object object = ChunkOwn.chunkCounter.get(player);
-        if (object != null)
-            owned = (Integer)object;
+        switch (addon) {
+            case BLOCKPVP: price = blockPvP; break;
+            case BLOCKPVE: price = blockPvE; break;
+            case BLOCKEXPLOSIONS: price = blockExplosions; break;
+            case LOCKCHESTS: price = lockChests; break;
+            case LOCKDOORS: price = lockDoors; break;
+            case DISABLEBUTTONS: price = disableButtons;  break;
+            case DISABLEPISTONS: price = disablePistons; break;
+            case ALARM: price = alarm; break;
+            case HEAL: price = heal; break;
+            case FEED: price = feed; break;
+            case NOTIFY: price = notify; break;
+            default: price = -2; break;
+        }
         
-        return sellPrice * Math.pow(sellMultiplier, owned);
+        if (price == -1)
+            price = 0;
+        
+        return price;
+    }
+    
+    /**
+     * Returns the SellPrice for the given Add-on
+     * 
+     * @param addon The given Add-on
+     * @return The SellPrice of the add-on
+     */
+    public static double getSellPrice(AddOn addon) {
+        return getBuyPrice(addon) * (moneyBack / 100);
     }
 }

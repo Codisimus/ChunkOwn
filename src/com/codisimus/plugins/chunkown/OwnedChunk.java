@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 
 /**
  * An OwnedChunk is a Chunk that a Player has bought
- * An OwnedChunk has an Owner and any number of CoOwners/groups
+ * An OwnedChunk has an Owner and any number of Co-owners/groups
  * The x-coordinate and z-coordinate together create a unique identifier
  *
  * @author Codisimus
@@ -15,7 +15,7 @@ public class OwnedChunk {
     public String world;
     public int x;
     public int z;
-    public String owner;
+    public ChunkOwner owner;
     public LinkedList<String> coOwners = new LinkedList<String>();
     public LinkedList<String> groups = new LinkedList<String>();
 
@@ -24,67 +24,71 @@ public class OwnedChunk {
      * 
      * @param chunk The chunk that the OwnedChunks represents
      */
-    public OwnedChunk(Chunk chunk) {
+    public OwnedChunk(Chunk chunk, String owner) {
         this.world = chunk.getWorld().getName();
         this.x = chunk.getX();
         this.z = chunk.getZ();
+        setOwner(owner);
     }
     
     /**
      * Constructs a new OwnedChunk
      * 
+     * @param world The name of the world of the Chunk
      * @param x The x-coordinate of the Chunk
      * @param z The z-coordinate of the Chunk
      * @param owner The name of the owner of the Chunk
      */
-    public OwnedChunk(String world, int x, int z) {
+    public OwnedChunk(String world, int x, int z, String owner) {
         this.world = world;
         this.x = x;
         this.z = z;
+        setOwner(owner);
+    }
+    
+    /**
+     * Sets the ChunkOwner of the OwnedChunk and increments their chunkCounter by 1
+     * 
+     * @param player The name of the owner of the Chunk
+     */
+    private void setOwner(String player) {
+        owner = ChunkOwn.findOwner(player);
+        if (owner == null)
+            owner = new ChunkOwner(player);
+        
+        owner.chunkCounter++;
     }
 
     /**
-     * Returns whether the given player is a CoOwner
-     * CoOwner includes being in a group that has CoOwnership
+     * Returns whether the given player is a Co-owner
+     * Co-owner includes being in a group that has Co-ownership
      * 
-     * @param player The Player to be check for CoOwnership
-     * @return true if the given player is a CoOwner
+     * @param player The Player to be check for Co-ownership
+     * @return true if the given player is a Co-owner
      */
     public boolean isCoOwner(Player player) {
-        //Check to see if the Player is a CoOwner
+        //Check to see if the Player is a Co-owner
+        for (String coOwner: owner.coOwners)
+            if (coOwner.equalsIgnoreCase(player.getName()))
+                return true;
+
+        //Return true if the Player is in a group that has Co-ownership
+        for (String group: owner.groups)
+            if (ChunkOwn.permission.playerInGroup(player, group))
+                return true;
+        
+        //Check to see if the Player is a Co-owner
         for (String coOwner: coOwners)
             if (coOwner.equalsIgnoreCase(player.getName()))
                 return true;
 
-        //Return true if the Player is in a group that has CoOwnerShip
+        //Return true if the Player is in a group that has Co-ownership
         for (String group: groups)
             if (ChunkOwn.permission.playerInGroup(player, group))
                 return true;
         
         //Return false because the Player is not a coowner
         return false;
-    }
-    
-    /**
-     * Returns true if there are no neighboring Chunks with the same Owner
-     * 
-     * @return True if there are no neighboring Chunks with the same Owner
-     */
-    public boolean isLoner() {
-        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(world, x, z + 1);
-        if (ownedChunk != null && ownedChunk.owner.equals(owner))
-            return true;
-        
-        ownedChunk = ChunkOwn.findOwnedChunk(world, x, z - 1);
-        if (ownedChunk != null && ownedChunk.owner.equals(owner))
-            return true;
-        
-        ownedChunk = ChunkOwn.findOwnedChunk(world, x + 1, z);
-        if (ownedChunk != null && ownedChunk.owner.equals(owner))
-            return true;
-        
-        ownedChunk = ChunkOwn.findOwnedChunk(world, x - 1, z);
-        return ownedChunk != null && ownedChunk.owner.equals(owner);
     }
     
     /**
@@ -105,6 +109,6 @@ public class OwnedChunk {
     
     @Override
     public String toString() {
-        return "Chunk @ world="+world+" x="+(x*16+8)+" z="+(z*16+8);
+        return "Chunk @ world="+world+" x="+(x * 16 + 8)+" z="+(z * 16 + 8);
     }
 }
