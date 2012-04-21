@@ -14,6 +14,39 @@ permissions:
   chunkown.own:
     default: true
     description: Needed to manage owned Chunks (/chunk buy, /chunk sell, /chunk list, /chunk clear)
+  chunkown.addon.blockpvp:
+    default: true
+    description: Needed to buy the BlockPvP Add-on (/buy blockpvp)
+  chunkown.addon.blockpve:
+    default: false
+    description: Needed to buy the BlockPvE Add-on (/buy blockpve)
+  chunkown.addon.blockexplosions:
+    default: true
+    description: Needed to buy the BlockExplosions Add-on (/buy blockexplosions)
+  chunkown.addon.lockchests:
+    default: true
+    description: Needed to buy the LockChests Add-on (/buy lockchests)
+  chunkown.addon.lockdoors:
+    default: true
+    description: Needed to buy the LockDoors Add-on (/buy lockdoors)
+  chunkown.addon.disablebuttons:
+    default: true
+    description: Needed to buy the DisableButtons Add-on (/buy disablebuttons)
+  chunkown.addon.disablepistons:
+    default: true
+    description: Needed to buy the DisablePistons Add-on (/buy disablepistons)
+  chunkown.addon.alarm:
+    default: false
+    description: Needed to buy the Alarm Add-on (/buy alarm)
+  chunkown.addon.heal:
+    default: false
+    description: Needed to buy the Heal Add-on (/buy heal)
+  chunkown.addon.feed:
+    default: false
+    description: Needed to buy the Feed Add-on (/buy feed)
+  chunkown.addon.notify:
+    default: true
+    description: Needed to buy the Notify Add-on (/buy notify)
   chunkown.preview:
     default: true
     description: Needed to preview the boundaries of Chunks (/chunk preview)
