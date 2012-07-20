@@ -13,16 +13,14 @@ import org.bukkit.event.block.BlockPlaceEvent;
  * @author Codisimus
  */
 public class ChunkOwnAutoOwnListener implements Listener {
-    @EventHandler (priority = EventPriority.MONITOR)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBlockPlaceMonitor(BlockPlaceEvent event) {
-        if (event.isCancelled())
+        //Return if the Player is in a disabled World
+        Player player = event.getPlayer();
+        if (!ChunkOwn.enabledInWorld(player.getWorld()))
             return;
         
-        //Return if the Player and the Block are in seperate Chunks
-        Player player = event.getPlayer();
         Block block = event.getBlock();
-        if (player.getLocation().getChunk().equals(block.getChunk()))
-            return;
         
         //Return if the Chunk is already Owned
         OwnedChunk chunk = ChunkOwn.findOwnedChunk(block);
@@ -31,6 +29,6 @@ public class ChunkOwnAutoOwnListener implements Listener {
         
         ChunkOwner owner = ChunkOwn.findOwner(player.getName());
         if (block.getTypeId() == (owner == null ? ChunkOwn.defaultAutoOwnBlock : owner.autoOwnBlock))
-            ChunkOwnCommand.buy(player);
+            ChunkOwnCommand.buy(player, block.getChunk());
     }
 }

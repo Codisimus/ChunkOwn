@@ -45,14 +45,14 @@ public class Econ {
         if (economy != null) {
             //Cancel if the Player cannot afford the transaction
             if (!economy.has(name, price)) {
-                player.sendMessage(ChunkOwnMessages.insufficientFunds.replace("<price>", economy.format(price)));
+                player.sendMessage(ChunkOwnMessages.insufficientFunds.replace("<price>", format(price)));
                 return false;
             }
 
             economy.withdrawPlayer(name, price);
         }
         
-        player.sendMessage(ChunkOwnMessages.buy.replace("<price>", economy.format(price)));
+        player.sendMessage(ChunkOwnMessages.buy.replace("<price>", format(price)));
         return true;
     }
     
@@ -69,14 +69,15 @@ public class Econ {
         if (economy != null) {
             //Cancel if the Player cannot afford the transaction
             if (!economy.has(name, amount)) {
-                player.sendMessage("You must have "+economy.format(amount)+" to complete the transaction");
+                player.sendMessage("You must have "+format(amount)+" to complete the transaction");
                 return false;
             }
 
             economy.withdrawPlayer(name, amount);
         }
         
-        player.sendMessage(economy.format(amount)+"has been withdrawn from your account");
+        if (amount > 0)
+            player.sendMessage(format(amount)+" has been withdrawn from your account");
         return true;
     }
     
@@ -92,7 +93,7 @@ public class Econ {
         if (economy != null)
             economy.depositPlayer(name, amount);
         
-        player.sendMessage(economy.format(amount)+"has been refunded to your account");
+        player.sendMessage(format(amount)+"has been refunded to your account");
     }
     
     /**
@@ -102,7 +103,7 @@ public class Econ {
      */
     public static void sell(Player player) {
         String name = player.getName();
-        String price = economy.format(getSellPrice(name));
+        String price = format(getSellPrice(name));
         
         sell(name);
         
@@ -127,7 +128,7 @@ public class Econ {
      */
     public static void sell(Player admin, String owner) {
         sell(owner);
-        String price = economy.format(getSellPrice(owner));
+        String price = format(getSellPrice(owner));
 
         //Notify the Seller
         Player seller = ChunkOwn.server.getPlayer(owner);
@@ -145,7 +146,7 @@ public class Econ {
      */
     public static String format(double amount) {
         if (economy == null)
-            return "nothing";
+            return "free";
         
         return economy.format(amount).replace(".00", "");
     }

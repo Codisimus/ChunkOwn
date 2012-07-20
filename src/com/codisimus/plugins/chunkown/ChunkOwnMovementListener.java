@@ -14,14 +14,16 @@ import org.bukkit.event.player.PlayerMoveEvent;
  * @author Codisimus
  */
 public class ChunkOwnMovementListener implements Listener {
-    static long rate;
+    static int rate;
+    static int amount;
     private static LinkedList<Player> healing = new LinkedList<Player>();
     private static LinkedList<Player> feeding = new LinkedList<Player>();
     private static HashMap<Player, ChunkOwner> inChunk = new HashMap<Player, ChunkOwner>();
     
-    @EventHandler (priority = EventPriority.MONITOR)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
+        
         OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getTo().getBlock());
         if (chunk == null) {
             if (inChunk.containsKey(player))
@@ -40,12 +42,14 @@ public class ChunkOwnMovementListener implements Listener {
         String name = player.getName();
         
         ChunkOwner owner = inChunk.get(player);
+        if (owner == null)
+            return;
         
-        if (owner != null && owner.alarm)
+        if (owner.alarm && !owner.name.equals(name))
             owner.sendMessage(name+" left your owned property");
         
-        ChunkOwner walker = ChunkOwn.findOwner(name);
-        if (walker != null && walker.notify)
+        ChunkOwner walker = ChunkOwn.getOwner(name);
+        if (walker.notify)
             walker.sendMessage("You have left property owned by "+owner.name);
         
         healing.remove(player);
@@ -56,13 +60,12 @@ public class ChunkOwnMovementListener implements Listener {
     protected static void playerEnteredChunk(Player player, OwnedChunk chunk) {
         String name = player.getName();
         
-        ChunkOwner owner = inChunk.get(player);
-        if (owner.alarm)
-            owner.sendMessage(name+" entered your owned property: "+chunk.toString());
+        if (chunk.owner.alarm && !chunk.owner.name.equals(name))
+            chunk.owner.sendMessage(name+" entered your owned property: "+chunk.toString());
         
-        ChunkOwner walker = ChunkOwn.findOwner(name);
-        if (walker != null && walker.notify)
-            walker.sendMessage("You have entered property owned by "+owner.name);
+        ChunkOwner walker = ChunkOwn.getOwner(name);
+        if (walker.notify)
+            walker.sendMessage("You have entered property owned by "+chunk.owner.name);
         
         if (chunk.owner.heal)
             healing.add(player);
@@ -82,12 +85,8 @@ public class ChunkOwnMovementListener implements Listener {
         ChunkOwn.server.getScheduler().scheduleSyncRepeatingTask(ChunkOwn.plugin, new Runnable() {
             @Override
     	    public void run() {
-                for (Player player: healing) {
-                    int health = player.getHealth();
-                    health++;
-                    if (health <= player.getMaxHealth())
-                        player.setHealth(health);
-                }
+                for (Player player: healing)
+                    player.setHealth(Math.min(player.getHealth() + amount, player.getMaxHealth()));
     	    }
     	}, 0L, 20L * rate);
     }
@@ -103,12 +102,8 @@ public class ChunkOwnMovementListener implements Listener {
         ChunkOwn.server.getScheduler().scheduleSyncRepeatingTask(ChunkOwn.plugin, new Runnable() {
             @Override
     	    public void run() {
-                for (Player player: feeding) {
-                    int hunger = player.getFoodLevel();
-                    hunger++;
-                    if (hunger <= 20)
-                        player.setFoodLevel(hunger);
-                }
+                for (Player player: feeding)
+                    player.setFoodLevel(Math.min(player.getFoodLevel() + amount, 20));
     	    }
     	}, 0L, 20L * rate);
     }

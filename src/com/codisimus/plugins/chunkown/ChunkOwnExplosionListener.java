@@ -13,10 +13,11 @@ import org.bukkit.event.entity.EntityExplodeEvent;
  * @author Codisimus
  */
 public class ChunkOwnExplosionListener implements Listener {
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onEntityExplode(EntityExplodeEvent event) {
         Iterator<Block> itr = event.blockList().iterator();
         while (itr.hasNext()) {
+            
             OwnedChunk chunk = ChunkOwn.findOwnedChunk(itr.next());
             if (chunk != null && chunk.owner.blockExplosions)
                 itr.remove();

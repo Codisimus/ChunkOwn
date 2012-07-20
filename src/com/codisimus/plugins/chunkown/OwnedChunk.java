@@ -1,6 +1,7 @@
 package com.codisimus.plugins.chunkown;
 
 import java.util.LinkedList;
+import java.util.Properties;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
 
@@ -89,6 +90,31 @@ public class OwnedChunk {
         
         //Return false because the Player is not a coowner
         return false;
+    }
+    
+    public void save() {
+        String coOwnersString = "";
+        for (String string: coOwners)
+            coOwnersString = coOwnersString+"'"+string;
+        if (coOwnersString.isEmpty())
+            coOwnersString = "none";
+        else
+            coOwnersString = coOwnersString.substring(1);
+        
+        String groupsString = "";
+        for (String string: groups)
+            groupsString = groupsString+"'"+string;
+        if (groupsString.isEmpty())
+            groupsString = "none";
+        else
+            groupsString = groupsString.substring(1);
+        
+        if (!ChunkOwn.savedData.containsKey(world))
+            ChunkOwn.savedData.put(world, new Properties());
+        Properties p = ChunkOwn.savedData.get(world);
+        p.setProperty(x+"'"+z, owner.name+","+coOwnersString+","+groupsString);
+        
+        ChunkOwn.save(world);
     }
     
     /**

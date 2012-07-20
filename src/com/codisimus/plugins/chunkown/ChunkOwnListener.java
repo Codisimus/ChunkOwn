@@ -1,5 +1,7 @@
 package com.codisimus.plugins.chunkown;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,8 +26,28 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockPlaceEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onBlockPlace(BlockPlaceEvent event) {
+        /*if (event.isCancelled())
+            return;
+        
+        if (ChunkOwn.defaultAutoOwnBlock > 0) {
+            //Make sure that the Player and the Block are in the same Chunks
+            Player player = event.getPlayer();
+            Block block = event.getBlock();
+            if (player.getLocation().getChunk().equals(block.getChunk()))
+                player.sendMessage("You did not automattically own the Chunk because the Block you placed is in a separated Chunk then where you are standing");
+            else {
+                //Return if the Chunk is already Owned
+                OwnedChunk chunk = ChunkOwn.findOwnedChunk(block);
+                if (chunk == null) {
+                    ChunkOwner owner = ChunkOwn.getOwner(player.getName());
+                    if (block.getTypeId() == owner.autoOwnBlock)
+                        ChunkOwnCommand.buy(player);
+                }
+            }
+        }*/
+        
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock()))
             event.setCancelled(true);
     }
@@ -35,7 +57,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockBreakEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock()))
             event.setCancelled(true);
@@ -46,20 +68,42 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The SignChangeEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onSignChange(SignChangeEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock()))
             event.setCancelled(true);
     }
 
     /**
-     * Blocks within an OwnedChunk can only be ignited by the Owner, a Co-Owner, or an Admin
+     * Blocks within an OwnedChunk can only be ignited by the Owner/Co-Owner
      * 
      * @param event The BlockIgniteEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onBlockIgnite(BlockIgniteEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock()))
+            event.setCancelled(true);
+    }
+    
+    /**
+     * Fire cannot spread within an OwnedChunk
+     * 
+     * @param event The BlockSpreadEvent that occurred
+     */
+    @EventHandler(ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    public void onBlockSpread(BlockSpreadEvent event) {
+        if (event.getSource().getType() == Material.FIRE && !ChunkOwn.canBuild(null, event.getBlock()))
+            event.setCancelled(true);
+    }
+
+    /**
+     * Blocks within an OwnedChunk cannot burn
+     * 
+     * @param event The BlockBurnEvent that occurred
+     */
+    @EventHandler(ignoreCancelled=true, priority=EventPriority.HIGHEST)
+    public void onBlockBurn(BlockBurnEvent event) {
+        if (!ChunkOwn.canBuild(null, event.getBlock()))
             event.setCancelled(true);
     }
 
@@ -68,7 +112,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockIgniteEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onEggThrow(PlayerEggThrowEvent event) {
         Player player = event.getPlayer();
         if (!ChunkOwn.canBuild(player, player.getTargetBlock(null, 10)))
@@ -80,7 +124,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PlayerBucketEmptyEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked().getRelative(event.getBlockFace())))
             event.setCancelled(true);
@@ -91,7 +135,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PlayerBucketFillEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onPlayerBucketFill(PlayerBucketFillEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked()))
             event.setCancelled(true);
@@ -102,7 +146,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PaintingBreakByEntityEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onPaintingBreak(PaintingBreakByEntityEvent event) {
         Player player = null;
         Entity entity = event.getRemover();
@@ -118,7 +162,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The VehicleDamageEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onVehicleDamage(VehicleDamageEvent event) {
         Player player = null;
         Entity entity = event.getAttacker();
@@ -134,7 +178,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The VehicleDestroyEvent that occurred
      */
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
     public void onVehicleDestroy(VehicleDestroyEvent event) {
         Player player = null;
         Entity entity = event.getAttacker();
@@ -153,7 +197,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockDamageEvent that occurred
      */
-    @EventHandler (priority = EventPriority.MONITOR)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
     public void onBlockDamage(BlockDamageEvent event) {
         ChunkOwnCommand.removeMarker(event.getBlock());
     }
@@ -163,9 +207,14 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PlayerJoinEvent that occurred
      */
-    @EventHandler (priority = EventPriority.MONITOR)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        logAsSeen(event.getPlayer().getName());
+        String player = event.getPlayer().getName();
+        
+        logAsSeen(player);
+        
+        //Ensure that the Player has a ChunkOwner that represents them
+        ChunkOwn.getOwner(player);
     }
     
     /**
@@ -173,7 +222,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PlayerQuitEvent that occurred
      */
-    @EventHandler (priority = EventPriority.MONITOR)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         logAsSeen(player.getName());
@@ -189,7 +238,7 @@ public class ChunkOwnListener implements Listener {
         ChunkOwner owner = ChunkOwn.findOwner(player);
         if (owner == null)
             return;
-            
+        
         ChunkOwn.lastDaySeen.setProperty(player, String.valueOf(ChunkOwn.getDayAD()));
         ChunkOwn.saveLastSeen();
     }

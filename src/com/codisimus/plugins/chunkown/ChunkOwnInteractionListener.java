@@ -1,5 +1,6 @@
 package com.codisimus.plugins.chunkown;
 
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -13,7 +14,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
  * @author Codisimus
  */
 public class ChunkOwnInteractionListener implements Listener {
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         //Return if the Event was arm flailing
         Action action = event.getAction();
@@ -23,13 +24,18 @@ public class ChunkOwnInteractionListener implements Listener {
             default: break;
         }
         
+        //Return if the Chunk is not owned
+        Block block = event.getClickedBlock();
+        OwnedChunk chunk = ChunkOwn.findOwnedChunk(block);
+        if (chunk == null)
+            return;
+        
         //Return if the player is an Owner/Co-Owner
-        OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getClickedBlock());
         Player player = event.getPlayer();
         if (chunk.owner.name.equals(player.getName()) || chunk.isCoOwner(player))
             return;
         
-        switch (event.getMaterial()) {
+        switch (block.getType()) {
             case DISPENSER: //Fall through
             case FURNACE: //Fall through
             case BURNING_FURNACE: //Fall through

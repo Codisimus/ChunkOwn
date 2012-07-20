@@ -13,11 +13,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
  * @author Codisimus
  */
 public class ChunkOwnDamageListener implements Listener {
-    @EventHandler (priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if (event.isCancelled())
-            return;
-        
         //Return if the Enitity damaged is not a Player
         Entity wounded = event.getEntity();
         if (!(wounded instanceof Player))
