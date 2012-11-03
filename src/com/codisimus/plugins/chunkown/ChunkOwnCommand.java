@@ -15,7 +15,7 @@ import org.bukkit.entity.Player;
 
 /**
  * Executes Player Commands
- * 
+ *
  * @author Codisimus
  */
 public class ChunkOwnCommand implements CommandExecutor {
@@ -25,14 +25,14 @@ public class ChunkOwnCommand implements CommandExecutor {
     static LinkedList<Block> previewBlocks = new LinkedList<Block>();
     private static enum Action { HELP, BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW, RL }
     private Map<String, Long> playerLastPreview;
-    
+
     public ChunkOwnCommand() {
         playerLastPreview = new HashMap<String, Long>();
     }
-    
+
     /**
      * Listens for ChunkOwn commands to execute them
-     * 
+     *
      * @param sender The CommandSender who may not be a Player
      * @param command The command that was executed
      * @param alias The alias that the sender used
@@ -47,30 +47,30 @@ public class ChunkOwnCommand implements CommandExecutor {
         } else if (args.length == 1 && args[0].equals("rl")) {
             ChunkOwn.rl();
         }
-        
-        Player player = (Player)sender;
-        
+
+        Player player = (Player) sender;
+
         //Cancel if the Player is in a disabled World
         if (!ChunkOwn.enabledInWorld(player.getWorld())) {
             player.sendMessage("ChunkOwn is disabled in your current World");
             return true;
         }
-        
+
         //Display help page if the Player did not add any arguments
         if (args.length == 0) {
             sendHelp(player);
             return true;
         }
-        
+
         Action action;
-        
+
         try {
             action = Action.valueOf(args[0].toUpperCase());
         } catch (IllegalArgumentException notEnum) {
             sendHelp(player);
             return true;
         }
-        
+
         //Execute the correct command
         switch (action) {
         case BUY:
@@ -158,11 +158,11 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         default: break;
         }
-        
+
         sendHelp(player);
         return true;
     }
-    
+
     /**
      * Gives ownership of the current Chunk to the Player
      * 
@@ -615,7 +615,7 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         }
         
-        ChunkOwn.save(chunk.getWorld().getName());
+        ownedChunk.save();
     }
     
     /**
