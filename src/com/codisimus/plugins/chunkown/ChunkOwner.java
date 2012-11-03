@@ -11,6 +11,9 @@ import org.bukkit.entity.Player;
  * @author Codisimus
  */
 public class ChunkOwner {
+    public static enum AddOn { BLOCKPVP, BLOCKPVE, BLOCKEXPLOSIONS, LOCKCHESTS,
+    LOCKDOORS, DISABLEBUTTONS, DISABLEPISTONS, ALARM, HEAL, FEED, NOTIFY }
+    
     public String name;
     public int chunkCounter = 0;
     
@@ -18,9 +21,6 @@ public class ChunkOwner {
     public LinkedList<String> groups = new LinkedList<String>();
     
     public int autoOwnBlock = ChunkOwn.defaultAutoOwnBlock;
-    
-    public static enum AddOn { BLOCKPVP, BLOCKPVE, BLOCKEXPLOSIONS, LOCKCHESTS,
-    LOCKDOORS, DISABLEBUTTONS, DISABLEPISTONS, ALARM, HEAL, FEED, NOTIFY }
     
     public boolean blockPvP = Econ.blockPvP == -1;
     public boolean blockPvE = Econ.blockPvE == -1;
@@ -51,9 +51,9 @@ public class ChunkOwner {
      */
     public void sendMessage(String msg) {
         Player player = ChunkOwn.server.getPlayer(name);
-        if (player != null)
+        if (player != null) {
             player.sendMessage(msg);
-        else if (ChunkOwn.pm.isPluginEnabled("TextPlayer")) {
+        } else if (ChunkOwn.pm.isPluginEnabled("TextPlayer")) {
             User user = TextPlayer.findUser(name);
             user.sendText(msg);
         }
@@ -67,18 +67,18 @@ public class ChunkOwner {
      */
     public boolean hasAddOn(AddOn addOn) {
         switch (addOn) {
-            case BLOCKPVP: return blockPvP;
-            case BLOCKPVE: return blockPvE;
-            case BLOCKEXPLOSIONS: return blockExplosions;
-            case LOCKCHESTS: return lockChests;
-            case LOCKDOORS: return lockDoors;
-            case DISABLEBUTTONS: return disableButtons;
-            case DISABLEPISTONS: return disablePistons;
-            case NOTIFY: return notify;
-            case ALARM: return alarm;
-            case HEAL: return heal;
-            case FEED: return feed;
-            default: return false;
+        case BLOCKPVP: return blockPvP;
+        case BLOCKPVE: return blockPvE;
+        case BLOCKEXPLOSIONS: return blockExplosions;
+        case LOCKCHESTS: return lockChests;
+        case LOCKDOORS: return lockDoors;
+        case DISABLEBUTTONS: return disableButtons;
+        case DISABLEPISTONS: return disablePistons;
+        case NOTIFY: return notify;
+        case ALARM: return alarm;
+        case HEAL: return heal;
+        case FEED: return feed;
+        default: return false;
         }
     }
     
@@ -90,60 +90,60 @@ public class ChunkOwner {
      */
     public void setAddOn(AddOn addOn, boolean on) {
         switch (addOn) {
-            case BLOCKPVP:
-                blockPvP = on;
-                sendMessage("Players "+(on ? "can" : "cannot")+" be hurt by other Players while on your property");
-                break;
-                
-            case BLOCKPVE:
-                blockPvE = on;
-                sendMessage("Players "+(on ? "can" : "cannot")+" be hurt by Mobs while on your property");
-                break;
-                
-            case BLOCKEXPLOSIONS:
-                blockExplosions = on;
-                sendMessage("Explosions on your property will "+(on ? "be" : "not be")+" neutralized");
-                break;
-                
-            case LOCKCHESTS:
-                lockChests = on;
-                sendMessage("Chests/Furnaces/Dispensers on your property will be "+(on ? "locked" : "accessible")+" to non-owners");
-                break;
-                
-            case LOCKDOORS:
-                lockDoors = on;
-                sendMessage("Doors on your property will be "+(on ? "locked" : "accessible")+" to non-owners");
-                break;
-                
-            case DISABLEBUTTONS:
-                disableButtons = on;
-                sendMessage("Buttons/Levers/Plates on your property will be "+(on ? "disabled" : "enabled")+" to non-owners");
-                break;
-                
-            case DISABLEPISTONS:
-                disablePistons = on;
-                sendMessage("Pistons on your property will be "+(on ? "non-functional" : "functional"));
-                break;
-                
-            case NOTIFY:
-                notify = on;
-                sendMessage("You will "+(on ? "be" : "not be")+" notified when you enter an Owned Chunk");
-                break;
-                
-            case ALARM:
-                alarm = on;
-                sendMessage("You will "+(on ? "be" : "not be")+" notified when a Player enters your property");
-                break;
-                
-            case HEAL:
-                heal = on;
-                sendMessage("Players "+(on ? "will" : " will not")+" gain health while on your property");
-                break;
-                
-            case FEED:
-                feed = on;
-                sendMessage("Players "+(on ? "will" : " will not")+" gain food while on your property");
-                break;
+        case BLOCKPVP:
+            blockPvP = on;
+            sendMessage("Players "+(on ? "can" : "cannot")+" be hurt by other Players while on your property");
+            break;
+
+        case BLOCKPVE:
+            blockPvE = on;
+            sendMessage("Players "+(on ? "can" : "cannot")+" be hurt by Mobs while on your property");
+            break;
+
+        case BLOCKEXPLOSIONS:
+            blockExplosions = on;
+            sendMessage("Explosions on your property will "+(on ? "be" : "not be")+" neutralized");
+            break;
+
+        case LOCKCHESTS:
+            lockChests = on;
+            sendMessage("Chests/Furnaces/Dispensers on your property will be "+(on ? "locked" : "accessible")+" to non-owners");
+            break;
+
+        case LOCKDOORS:
+            lockDoors = on;
+            sendMessage("Doors on your property will be "+(on ? "locked" : "accessible")+" to non-owners");
+            break;
+
+        case DISABLEBUTTONS:
+            disableButtons = on;
+            sendMessage("Buttons/Levers/Plates on your property will be "+(on ? "disabled" : "enabled")+" to non-owners");
+            break;
+
+        case DISABLEPISTONS:
+            disablePistons = on;
+            sendMessage("Pistons on your property will be "+(on ? "non-functional" : "functional"));
+            break;
+
+        case NOTIFY:
+            notify = on;
+            sendMessage("You will "+(on ? "be" : "not be")+" notified when you enter an Owned Chunk");
+            break;
+
+        case ALARM:
+            alarm = on;
+            sendMessage("You will "+(on ? "be" : "not be")+" notified when a Player enters your property");
+            break;
+
+        case HEAL:
+            heal = on;
+            sendMessage("Players "+(on ? "will" : " will not")+" gain health while on your property");
+            break;
+
+        case FEED:
+            feed = on;
+            sendMessage("Players "+(on ? "will" : " will not")+" gain food while on your property");
+            break;
         }
     }
     

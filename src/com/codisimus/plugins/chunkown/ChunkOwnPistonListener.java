@@ -28,8 +28,9 @@ public class ChunkOwnPistonListener implements Listener {
         int size = blocks.size();
         if (size != 0) {
             OwnedChunk chunk = ChunkOwn.findOwnedChunk(blocks.get(size - 1).getRelative(event.getDirection()));
-            if (chunk != null && chunk.owner.disablePistons)
+            if (chunk != null && chunk.owner.disablePistons) {
                 event.setCancelled(true);
+            }
         }
     }
     
@@ -37,8 +38,9 @@ public class ChunkOwnPistonListener implements Listener {
     public void onPistonRetract(BlockPistonRetractEvent event) {
         if (event.isSticky()) {
             OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getBlock().getRelative(event.getDirection(), 2));
-            if (chunk != null && chunk.owner.disablePistons)
+            if (chunk != null && chunk.owner.disablePistons) {
                 event.setCancelled(true);
+            }
         }
     }
 }

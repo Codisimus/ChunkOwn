@@ -26,10 +26,10 @@ public class ChunkOwnMovementListener implements Listener {
         
         OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getTo().getBlock());
         if (chunk == null) {
-            if (inChunk.containsKey(player))
+            if (inChunk.containsKey(player)) {
                 playerLeftChunk(player);
-        }
-        else {
+            }
+        } else {
             ChunkOwner previous = inChunk.get(player);
             if (chunk.owner != previous) {
                 playerLeftChunk(player);
@@ -42,15 +42,18 @@ public class ChunkOwnMovementListener implements Listener {
         String name = player.getName();
         
         ChunkOwner owner = inChunk.get(player);
-        if (owner == null)
+        if (owner == null) {
             return;
+        }
         
-        if (owner.alarm && !owner.name.equals(name))
+        if (owner.alarm && !owner.name.equals(name)) {
             owner.sendMessage(name+" left your owned property");
+        }
         
         ChunkOwner walker = ChunkOwn.getOwner(name);
-        if (walker.notify)
+        if (walker.notify) {
             walker.sendMessage("You have left property owned by "+owner.name);
+        }
         
         healing.remove(player);
         feeding.remove(player);
@@ -60,17 +63,21 @@ public class ChunkOwnMovementListener implements Listener {
     protected static void playerEnteredChunk(Player player, OwnedChunk chunk) {
         String name = player.getName();
         
-        if (chunk.owner.alarm && !chunk.owner.name.equals(name))
+        if (chunk.owner.alarm && !chunk.owner.name.equals(name)) {
             chunk.owner.sendMessage(name+" entered your owned property: "+chunk.toString());
+        }
         
         ChunkOwner walker = ChunkOwn.getOwner(name);
-        if (walker.notify)
+        if (walker.notify) {
             walker.sendMessage("You have entered property owned by "+chunk.owner.name);
+        }
         
-        if (chunk.owner.heal)
+        if (chunk.owner.heal) {
             healing.add(player);
-        if (chunk.owner.feed)
+        }
+        if (chunk.owner.feed) {
             feeding.add(player);
+        }
         inChunk.put(player, chunk.owner);
     }
     
@@ -79,14 +86,16 @@ public class ChunkOwnMovementListener implements Listener {
      * 
      */
     public static void scheduleHealer() {
-        if (Econ.heal == -2)
+        if (Econ.heal == -2) {
             return;
+        }
         
         ChunkOwn.server.getScheduler().scheduleSyncRepeatingTask(ChunkOwn.plugin, new Runnable() {
             @Override
     	    public void run() {
-                for (Player player: healing)
+                for (Player player: healing) {
                     player.setHealth(Math.min(player.getHealth() + amount, player.getMaxHealth()));
+                }
     	    }
     	}, 0L, 20L * rate);
     }
@@ -96,14 +105,16 @@ public class ChunkOwnMovementListener implements Listener {
      * 
      */
     public static void scheduleFeeder() {
-        if (Econ.feed == -2)
+        if (Econ.feed == -2) {
             return;
+        }
         
         ChunkOwn.server.getScheduler().scheduleSyncRepeatingTask(ChunkOwn.plugin, new Runnable() {
             @Override
     	    public void run() {
-                for (Player player: feeding)
+                for (Player player: feeding) {
                     player.setFoodLevel(Math.min(player.getFoodLevel() + amount, 20));
+                }
     	    }
     	}, 0L, 20L * rate);
     }

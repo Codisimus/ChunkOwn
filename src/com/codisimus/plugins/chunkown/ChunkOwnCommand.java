@@ -20,11 +20,11 @@ import org.bukkit.entity.Player;
  */
 public class ChunkOwnCommand implements CommandExecutor {
     public static String command;
-    private static enum Action { HELP, BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW, RL }
     public static long cooldown;
     public static int cornerID;
-    private Map<String, Long> playerLastPreview;
     static LinkedList<Block> previewBlocks = new LinkedList<Block>();
+    private static enum Action { HELP, BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW, RL }
+    private Map<String, Long> playerLastPreview;
     
     public ChunkOwnCommand() {
         playerLastPreview = new HashMap<String, Long>();
@@ -42,10 +42,11 @@ public class ChunkOwnCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
         //Cancel if the command is not from a Player
-        if (!(sender instanceof Player))
+        if (!(sender instanceof Player)) {
             return true;
-        else if (args.length == 1 && args[0].equals("rl"))
+        } else if (args.length == 1 && args[0].equals("rl")) {
             ChunkOwn.rl();
+        }
         
         Player player = (Player)sender;
         
@@ -65,97 +66,101 @@ public class ChunkOwnCommand implements CommandExecutor {
         
         try {
             action = Action.valueOf(args[0].toUpperCase());
-        }
-        catch (IllegalArgumentException notEnum) {
+        } catch (IllegalArgumentException notEnum) {
             sendHelp(player);
             return true;
         }
         
         //Execute the correct command
         switch (action) {
-            case BUY:
-                switch (args.length) {
-                    case 1: buy(player); return true;
-                        
-                    case 2:
-                        try {
-                            buyAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
-                        }
-                        catch (IllegalArgumentException notAddOn) {
-                            player.sendMessage(args[1]+" is not a valid Add-on");
-                        }
-                        return true;
-                        
-                    default: sendHelp(player); return true;
-                } 
-                
-            case SELL:
-                switch (args.length) {
-                    case 1: sell(player); return true;
-                        
-                    case 2:
-                        try {
-                            sellAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
-                        }
-                        catch (IllegalArgumentException notAddOn) {
-                            player.sendMessage(args[1]+" is not a valid Add-on");
-                        }
-                        return true;
-                        
-                    default: sendHelp(player); return true;
-                } 
-                
-            case LIST:
-                switch (args.length) {
-                    case 1: list(player); return true;
-                    
-                    case 2:
-                        if (args[1].equals("addons"))
-                            listAddOns(player);
-                        else
-                            sendAddOnHelp(player);
-                        return true;
-                    
-                    default: sendHelp(player); return true;
+        case BUY:
+            switch (args.length) {
+            case 1: buy(player); return true;
+
+            case 2:
+                try {
+                    buyAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
+                } catch (IllegalArgumentException notAddOn) {
+                    player.sendMessage(args[1]+" is not a valid Add-on");
                 }
-                
-            case INFO: info(player); return true;
-                
-            case COOWNER:
-                switch (args.length) {
-                    case 4: chunkCoowner(player, args[2], args[1], args[3]); return true;
-                        
-                    case 5:
-                        if (args[1].equals("all"))
-                            coowner(player, args[3], args[2], args[4]);
-                        else
-                            sendHelp(player);
-                        return true;
-                        
-                    default: sendHelp(player); return true;
+                return true;
+
+            default: break;
+            } 
+
+        case SELL:
+            switch (args.length) {
+            case 1: sell(player); return true;
+
+            case 2:
+                try {
+                    sellAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
+                } catch (IllegalArgumentException notAddOn) {
+                    player.sendMessage(args[1]+" is not a valid Add-on");
                 }
-                
-            case CLEAR: clear(player); return true;
-                
-            case PREVIEW: preview(player); return true;
-            
-            case HELP:
-                if (args.length == 2 && args[1].equals("addons"))
+                return true;
+
+            default: break;
+            } 
+
+        case LIST:
+            switch (args.length) {
+            case 1: list(player); return true;
+
+            case 2:
+                if (args[1].equals("addons")) {
+                    listAddOns(player);
+                } else {
                     sendAddOnHelp(player);
-                else
+                }
+                return true;
+
+            default: break;
+            }
+
+        case INFO: info(player); return true;
+
+        case COOWNER:
+            switch (args.length) {
+            case 4: chunkCoowner(player, args[2], args[1], args[3]); return true;
+
+            case 5:
+                if (args[1].equals("all")) {
+                    coowner(player, args[3], args[2], args[4]);
+                } else {
                     sendHelp(player);
+                }
                 return true;
-                
-            case RL:
-                //Cancel if the Player does not have permission to use the command
-                if (!ChunkOwn.hasPermission(player, "admin"))
-                    player.sendMessage(ChunkOwnMessages.permission);
-                else
-                    ChunkOwn.rl(player);
-                return true;
-                
-            default: sendHelp(player); return true;
+
+            default: break;
+            }
+
+        case CLEAR: clear(player); return true;
+
+        case PREVIEW: preview(player); return true;
+
+        case HELP:
+            if (args.length == 2 && args[1].equals("addons")) {
+                sendAddOnHelp(player);
+            } else {
+                sendHelp(player);
+            }
+            return true;
+
+        case RL:
+            //Cancel if the Player does not have permission to use the command
+            if (!ChunkOwn.hasPermission(player, "admin")) {
+                player.sendMessage(ChunkOwnMessages.permission);
+            } else {
+                ChunkOwn.rl(player);
+            }
+            return true;
+
+        default: break;
         }
+        
+        sendHelp(player);
+        return true;
     }
     
     /**
@@ -184,29 +189,32 @@ public class ChunkOwnCommand implements CommandExecutor {
         
         //Check if the Player is limited
         int limit = ChunkOwn.getOwnLimit(player);
-        if (limit != -1)
+        if (limit != -1) {
             //Cancel if the Player owns their maximum limit
             if (ChunkOwn.getChunkCounter(name) >= limit) {
                 player.sendMessage(ChunkOwnMessages.limit);
                 return;
             }
+        }
         
         
         //Check if a group size is required
         if (ChunkOwn.groupSize > 1) {
             //Check if the Chunk is a loner (not connected to other owned Chunks
-            if (isLoner(chunk, name))
+            if (isLoner(chunk, name)) {
                 if (!ChunkOwn.canBuyLoner(ChunkOwn.getOwnedChunks(name))) {
                     player.sendMessage(ChunkOwnMessages.groupLand.replace("<MinimumGroupSize>", String.valueOf(ChunkOwn.groupSize)));
                     return;
                 }
+            }
         }
         
         //Charge the Player only if they don't have the 'chunkown.free' node
-        if (ChunkOwn.hasPermission(player, "free"))
+        if (ChunkOwn.hasPermission(player, "free")) {
             player.sendMessage(ChunkOwnMessages.buyFree);
-        else if(!Econ.buy(player))
+        } else if(!Econ.buy(player)) {
             return;
+        }
         
         markCorners(chunk, false);
         ChunkOwn.addOwnedChunk(new OwnedChunk(chunk, name));
@@ -236,29 +244,32 @@ public class ChunkOwnCommand implements CommandExecutor {
         
         //Check if the Player is limited
         int limit = ChunkOwn.getOwnLimit(player);
-        if (limit != -1)
+        if (limit != -1) {
             //Cancel if the Player owns their maximum limit
             if (ChunkOwn.getChunkCounter(name) >= limit) {
                 player.sendMessage(ChunkOwnMessages.limit);
                 return;
             }
+        }
         
         
         //Check if a group size is required
         if (ChunkOwn.groupSize > 1) {
             //Check if the Chunk is a loner (not connected to other owned Chunks
-            if (isLoner(chunk, name))
+            if (isLoner(chunk, name)) {
                 if (!ChunkOwn.canBuyLoner(ChunkOwn.getOwnedChunks(name))) {
                     player.sendMessage(ChunkOwnMessages.groupLand.replace("<MinimumGroupSize>", String.valueOf(ChunkOwn.groupSize)));
                     return;
                 }
+            }
         }
         
         //Charge the Player only if they don't have the 'chunkown.free' node
-        if (ChunkOwn.hasPermission(player, "free"))
+        if (ChunkOwn.hasPermission(player, "free")) {
             player.sendMessage(ChunkOwnMessages.buyFree);
-        else if(!Econ.buy(player))
+        } else if(!Econ.buy(player)) {
             return;
+        }
         
         markCorners(chunk, false);
         ChunkOwn.addOwnedChunk(new OwnedChunk(chunk, name));
@@ -286,8 +297,9 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
         
         //Cancel if the Player could not afford the transaction
-        if (!Econ.charge(player, Econ.getBuyPrice(addOn)))
+        if (!Econ.charge(player, Econ.getBuyPrice(addOn))) {
             return;
+        }
         
         owner.setAddOn(addOn, true);
         owner.save();
@@ -309,7 +321,7 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
         
         Econ.refund(player, Econ.getSellPrice(addOn));
-        owner.setAddOn(addOn, true);
+        owner.setAddOn(addOn, false);
         owner.save();
     }
     
@@ -350,21 +362,23 @@ public class ChunkOwnCommand implements CommandExecutor {
         
         //Check if the Player is limited
         int limit = ChunkOwn.getOwnLimit(player);
-        if (limit != -1)
+        if (limit != -1) {
             //Cancel if the Player owns their maximum limit
             if (ChunkOwn.getChunkCounter(name) >= limit) {
                 player.sendMessage(ChunkOwnMessages.limit);
                 return;
             }
+        }
         
         //Check if a group size is required
         if (ChunkOwn.groupSize > 1) {
             //Check if the Chunk is a loner (not connected to other owned Chunks
-            if (isLoner(chunk, name))
+            if (isLoner(chunk, name)) {
                 if (!ChunkOwn.canBuyLoner(ChunkOwn.getOwnedChunks(name))) {
                     player.sendMessage(ChunkOwnMessages.groupLand.replace("<MinimumGroupSize>", String.valueOf(ChunkOwn.groupSize)));
                     return;
                 }
+            }
         }
         
         markCorners(chunk, true);
@@ -388,15 +402,18 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
         
         //Cancel if the OwnedChunk is owned by someone else
-        if (!ownedChunk.owner.name.equals(player.getName()))
-            if (ChunkOwn.hasPermission(player, "admin"))
+        if (!ownedChunk.owner.name.equals(player.getName())) {
+            if (ChunkOwn.hasPermission(player, "admin")) {
                 Econ.sell(player, ownedChunk.owner.name);
+            }
             else {
                 player.sendMessage(ChunkOwnMessages.doNotOwn);
                 return;
             }
-        else
+        }
+        else {
             Econ.sell(player);
+        }
         
         ChunkOwn.removeOwnedChunk(ownedChunk);
     }
@@ -412,12 +429,15 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         //Retrieve the ownLimit to display to the Player
         int ownLimit = ChunkOwn.getOwnLimit(player);
-        if (ownLimit > -1)
+        if (ownLimit > -1) {
             player.sendMessage("Total amount you may own: "+ownLimit);
+        }
         
-        for (OwnedChunk ownedChunk: ChunkOwn.getOwnedChunks())
-            if (ownedChunk.owner.name.equals(name))
+        for (OwnedChunk ownedChunk: ChunkOwn.getOwnedChunks()) {
+            if (ownedChunk.owner.name.equals(name)) {
                 player.sendMessage(ownedChunk.toString());
+            }
+        }
     }
     
     /**
@@ -429,28 +449,39 @@ public class ChunkOwnCommand implements CommandExecutor {
         ChunkOwner owner = ChunkOwn.getOwner(player.getName());
         
         String list = "Enabled Add-ons: ";
-        if (Econ.blockPvP != -2 && owner.blockPvP)
+        if (Econ.blockPvP != -2 && owner.blockPvP) {
             list = list.concat("BlockPvP, ");
-        if (Econ.blockPvE != -2 && owner.blockPvE)
+        }
+        if (Econ.blockPvE != -2 && owner.blockPvE) {
             list = list.concat("BlockPvE, ");
-        if (Econ.blockExplosions != -2 && owner.blockExplosions)
+        }
+        if (Econ.blockExplosions != -2 && owner.blockExplosions) {
             list = list.concat("BlockExplosions, ");
-        if (Econ.lockChests != -2 && owner.lockChests)
+        }
+        if (Econ.lockChests != -2 && owner.lockChests) {
             list = list.concat("LockChests, ");
-        if (Econ.lockDoors != -2 && owner.lockDoors)
+        }
+        if (Econ.lockDoors != -2 && owner.lockDoors) {
             list = list.concat("LockDoors, ");
-        if (Econ.disableButtons != -2 && owner.disableButtons)
+        }
+        if (Econ.disableButtons != -2 && owner.disableButtons) {
             list = list.concat("DisableButtons, ");
-        if (Econ.disablePistons != -2 && owner.disablePistons)
+        }
+        if (Econ.disablePistons != -2 && owner.disablePistons) {
             list = list.concat("DisablePistons, ");
-        if (Econ.alarm != -2 && owner.alarm)
+        }
+        if (Econ.alarm != -2 && owner.alarm) {
             list = list.concat("AlarmSystem, ");
-        if (Econ.heal != -2 && owner.heal)
+        }
+        if (Econ.heal != -2 && owner.heal) {
             list = list.concat("Heal, ");
-        if (Econ.feed != -2 && owner.feed)
+        }
+        if (Econ.feed != -2 && owner.feed) {
             list = list.concat("Feed, ");
-        if (Econ.notify != -2 && owner.notify)
+        }
+        if (Econ.notify != -2 && owner.notify) {
             list = list.concat("Notify, ");
+        }
         
         player.sendMessage(list.substring(0, list.length()-2));
         
@@ -488,14 +519,16 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         //Display CoOwners of OwnedChunk to Player
         String coOwners = "CoOwners:  ";
-        for (String coOwner: ownedChunk.coOwners)
+        for (String coOwner: ownedChunk.coOwners) {
             coOwners = coOwners.concat(coOwner.concat(", "));
+        }
         player.sendMessage(coOwners.substring(0, coOwners.length() - 2));
 
         //Display CoOwner Groups of OwnedChunk to Player
         String groups = "CoOwner Groups:  ";
-        for (String group: ownedChunk.groups)
+        for (String group: ownedChunk.groups) {
             groups = groups.concat(group.concat(", "));
+        }
         player.sendMessage(groups.substring(0, groups.length() - 2));
     }
     
@@ -531,41 +564,53 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
 
         //Determine the command to execute
-        if (type.equals("player"))
+        if (type.equals("player")) {
             if (action.equals("add")) {
-                //Cancel if the Player is already a CoOwner
+                //Cancel if the Player is already a Co-Owner
                 if (ownedChunk.coOwners.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a CoOwner");
+                    player.sendMessage(coOwner+" is already a Co-Owner");
                     return;
                 }
                 
                 ownedChunk.coOwners.add(coOwner);
-                player.sendMessage(coOwner+" added as a CoOwner");
-            }
-            else if (action.equals("remove"))
+                player.sendMessage(coOwner+" added as a Co-Owner");
+            } else if (action.equals("remove")) {
+                //Cancel if the Player is not a Co-Owner
+                if (!ownedChunk.coOwners.contains(coOwner)) {
+                    player.sendMessage(coOwner+" is not a Co-Owner");
+                    return;
+                }
+                
                 ownedChunk.coOwners.remove(coOwner);
-            else {
+                player.sendMessage(coOwner+" removed as a Co-Owner");
+            } else {
                 sendHelp(player);
                 return;
             }
-        else if (type.equals("group"))
+        } else if (type.equals("group")) {
             if (action.equals("add")) {
                 //Cancel if the Group is already a CoOwner
                 if (ownedChunk.groups.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a CoOwner");
+                    player.sendMessage(coOwner+" is already a Co-Owner");
                     return;
                 }
                 
                 ownedChunk.groups.add(coOwner);
-                player.sendMessage(coOwner+" added as a CoOwner");
-            }
-            else if (action.equals("remove"))
+                player.sendMessage(coOwner+" added as a Co-Owner");
+            } else if (action.equals("remove")) {
+                //Cancel if the Group is not a Co-Owner
+                if (!ownedChunk.groups.contains(coOwner)) {
+                    player.sendMessage(coOwner+" is not a Co-Owner");
+                    return;
+                }
+                
                 ownedChunk.groups.remove(coOwner);
-            else {
+                player.sendMessage(coOwner+" removed as a Co-Owner");
+            } else {
                 sendHelp(player);
                 return;
             }
-        else {
+        } else {
             sendHelp(player);
             return;
         }
@@ -591,41 +636,53 @@ public class ChunkOwnCommand implements CommandExecutor {
         ChunkOwner owner = ChunkOwn.getOwner(player.getName());
 
         //Determine the command to execute
-        if (type.equals("player"))
+        if (type.equals("player")) {
             if (action.equals("add")) {
-                //Cancel if the Player is already a CoOwner
+                //Cancel if the Player is already a Co-Owner
                 if (owner.coOwners.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a CoOwner");
+                    player.sendMessage(coOwner+" is already a Co-Owner");
                     return;
                 }
                 
                 owner.coOwners.add(coOwner);
-                player.sendMessage(coOwner+" added as a CoOwner");
-            }
-            else if (action.equals("remove"))
+                player.sendMessage(coOwner+" added as a Co-Owner");
+            } else if (action.equals("remove")) {
+                //Cancel if the Player is not a Co-Owner
+                if (!owner.coOwners.contains(coOwner)) {
+                    player.sendMessage(coOwner+" is not a Co-Owner");
+                    return;
+                }
+                
                 owner.coOwners.remove(coOwner);
-            else {
+                player.sendMessage(coOwner+" removed as a Co-Owner");
+            } else {
                 sendHelp(player);
                 return;
             }
-        else if (type.equals("group"))
+        } else if (type.equals("group")) {
             if (action.equals("add")) {
                 //Cancel if the Group is already a CoOwner
                 if (owner.groups.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a CoOwner");
+                    player.sendMessage(coOwner+" is already a Co-Owner");
                     return;
                 }
                 
                 owner.groups.add(coOwner);
-                player.sendMessage(coOwner+" added as a CoOwner");
-            }
-            else if (action.equals("remove"))
+                player.sendMessage(coOwner+" added as a Co-Owner");
+            } else if (action.equals("remove")) {
+                //Cancel if the Group is not a Co-Owner
+                if (!owner.groups.contains(coOwner)) {
+                    player.sendMessage(coOwner+" is not a Co-Owner");
+                    return;
+                }
+                
                 owner.groups.remove(coOwner);
-            else {
+                player.sendMessage(coOwner+" removed as a Co-Owner");
+            } else {
                 sendHelp(player);
                 return;
             }
-        else {
+        } else {
             sendHelp(player);
             return;
         }
@@ -665,10 +722,12 @@ public class ChunkOwnCommand implements CommandExecutor {
             
             //Sell the Chunk if it is owned by the given Player
             if (ownedChunk.owner.name.equals(name)) {
-                if (player == null)
+                if (player == null) {
                     Econ.sell(name);
-                else
+                }
+                else {
                     Econ.sell(player);
+                }
 
                 itr.remove();
                 ChunkOwn.removeOwnedChunk(ownedChunk);
@@ -708,28 +767,39 @@ public class ChunkOwnCommand implements CommandExecutor {
         player.sendMessage("§2/"+command+" list addons§b List your current add-ons");
         
         //Display available Add-ons
-        if (ChunkOwn.hasPermission(player, AddOn.BLOCKPVP))
+        if (ChunkOwn.hasPermission(player, AddOn.BLOCKPVP)) {
             player.sendMessage("§2/"+command+" buy blockpvp§b No damage from Players: "+Econ.format(Econ.getBuyPrice(AddOn.BLOCKPVP)));
-        if (ChunkOwn.hasPermission(player, AddOn.BLOCKPVE))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.BLOCKPVE)) {
             player.sendMessage("§2/"+command+" buy blockpve§b No damage from Mobs: "+Econ.format(Econ.getBuyPrice(AddOn.BLOCKPVE)));
-        if (ChunkOwn.hasPermission(player, AddOn.BLOCKEXPLOSIONS))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.BLOCKEXPLOSIONS)) {
             player.sendMessage("§2/"+command+" buy blockexplosions§b No TNT/Creeper griefing: "+Econ.format(Econ.getBuyPrice(AddOn.BLOCKEXPLOSIONS)));
-        if (ChunkOwn.hasPermission(player, AddOn.LOCKCHESTS))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.LOCKCHESTS)) {
             player.sendMessage("§2/"+command+" buy lockchests§b Players can't open Chests/Furnaces/Dispensers: "+Econ.format(Econ.getBuyPrice(AddOn.LOCKCHESTS)));
-        if (ChunkOwn.hasPermission(player, AddOn.LOCKDOORS))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.LOCKDOORS)) {
             player.sendMessage("§2/"+command+" buy lockdoors§b Players can't open Doors: "+Econ.format(Econ.getBuyPrice(AddOn.LOCKDOORS)));
-        if (ChunkOwn.hasPermission(player, AddOn.DISABLEBUTTONS))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.DISABLEBUTTONS)) {
             player.sendMessage("§2/"+command+" buy disablebuttons§b Other Players can't use Buttons/Levers/Plates: "+Econ.format(Econ.getBuyPrice(AddOn.DISABLEBUTTONS)));
-        if (ChunkOwn.hasPermission(player, AddOn.DISABLEPISTONS))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.DISABLEPISTONS)) {
             player.sendMessage("§2/"+command+" buy disablepistons§b Pistons will no longer function: "+Econ.format(Econ.getBuyPrice(AddOn.DISABLEPISTONS)));
-        if (ChunkOwn.hasPermission(player, AddOn.ALARM))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.ALARM)) {
             player.sendMessage("§2/"+command+" buy alarm§b Be alerted when a Player enters your land: "+Econ.format(Econ.getBuyPrice(AddOn.ALARM)));
-        if (ChunkOwn.hasPermission(player, AddOn.HEAL))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.HEAL)) {
             player.sendMessage("§2/"+command+" buy heal§b Players gain half a heart every "+ChunkOwnMovementListener.rate+" seconds: "+Econ.format(Econ.getBuyPrice(AddOn.HEAL)));
-        if (ChunkOwn.hasPermission(player, AddOn.FEED))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.FEED)) {
             player.sendMessage("§2/"+command+" buy feed§b Players gain half a food every "+ChunkOwnMovementListener.rate+" seconds: "+Econ.format(Econ.getBuyPrice(AddOn.FEED)));
-        if (ChunkOwn.hasPermission(player, AddOn.NOTIFY))
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.NOTIFY)) {
             player.sendMessage("§2/"+command+" buy notify§b Be notified when you enter owned land: "+Econ.format(Econ.getBuyPrice(AddOn.NOTIFY)));
+        }
         
         player.sendMessage("§2/"+command+" sell [addon]§b Sell an addon for "+Econ.moneyBack+"% of its buy price");
     }
@@ -740,7 +810,7 @@ public class ChunkOwnCommand implements CommandExecutor {
      * @param chunk The given Chunk
      */
     public static void markCorners(Chunk chunk, boolean cooldown) {
-        for (int x = 0; x <= 15; x = x + 15)
+        for (int x = 0; x <= 15; x = x + 15) {
             for (int z = 0; z <= 15; z = z + 15) {
                 int y = chunk.getWorld().getMaxHeight() - 2;
                 boolean marked = false;
@@ -748,54 +818,60 @@ public class ChunkOwnCommand implements CommandExecutor {
                 Block block = chunk.getBlock(x, y, z);
                 while (y >= 0) {
                     //Do not stack cornerID Blocks
-                    if (block.getTypeId() == cornerID)
+                    if (block.getTypeId() == cornerID) {
                         break;
-                    
-                    switch (block.getType()) {
-                        case LEAVES: //Fall through
-                        case AIR: y--; break;
-                        
-                        case SAPLING: //Fall through
-                        case LONG_GRASS: //Fall through
-                        case DEAD_BUSH: //Fall through
-                        case YELLOW_FLOWER: //Fall through
-                        case RED_ROSE: //Fall through
-                        case BROWN_MUSHROOM: //Fall through
-                        case RED_MUSHROOM: //Fall through
-                        case SNOW:
-                            block.setTypeId(cornerID);
-                            marked = true;
-                            break;
-                        
-                        case BED_BLOCK: //Fall through
-                        case POWERED_RAIL: //Fall through
-                        case DETECTOR_RAIL: //Fall through
-                        case RAILS: //Fall through
-                        case STONE_PLATE: //Fall through
-                        case WOOD_PLATE:
-                            block = block.getRelative(0, 2, 0);
-                            block.setTypeId(cornerID);
-                            marked = true;
-                            break;
-                        
-                        default:
-                            block = block.getRelative(0, 1, 0);
-                            block.setTypeId(cornerID);
-                            marked = true;
-                            break;
                     }
                     
-                    if (marked)
+                    switch (block.getType()) {
+                    case LEAVES: //Fall through
+                    case AIR:
+                        y--;
                         break;
+
+                    case SAPLING: //Fall through
+                    case LONG_GRASS: //Fall through
+                    case DEAD_BUSH: //Fall through
+                    case YELLOW_FLOWER: //Fall through
+                    case RED_ROSE: //Fall through
+                    case BROWN_MUSHROOM: //Fall through
+                    case RED_MUSHROOM: //Fall through
+                    case SNOW:
+                        block.setTypeId(cornerID);
+                        marked = true;
+                        break;
+
+                    case BED_BLOCK: //Fall through
+                    case POWERED_RAIL: //Fall through
+                    case DETECTOR_RAIL: //Fall through
+                    case RAILS: //Fall through
+                    case STONE_PLATE: //Fall through
+                    case WOOD_PLATE:
+                        block = block.getRelative(0, 2, 0);
+                        block.setTypeId(cornerID);
+                        marked = true;
+                        break;
+
+                    default:
+                        block = block.getRelative(0, 1, 0);
+                        block.setTypeId(cornerID);
+                        marked = true;
+                        break;
+                    }
+                    
+                    if (marked) {
+                        break;
+                    }
                     
                     block = block.getRelative(0, -1, 0);
                 }
                 
                 previewBlocks.add(block);
                 
-                if (cooldown)
+                if (cooldown) {
                     scheduleCooldown(block);
+                }
             }
+        }
     }
     
     /**
@@ -819,8 +895,9 @@ public class ChunkOwnCommand implements CommandExecutor {
      */
     public static void removeMarker(Block block) {
         if (previewBlocks.contains(block)) {
-            if (block.getTypeId() == cornerID)
+            if (block.getTypeId() == cornerID) {
                 block.setTypeId(0);
+            }
             previewBlocks.remove(block);
         }
     }
@@ -838,20 +915,24 @@ public class ChunkOwnCommand implements CommandExecutor {
         int z = chunk.getZ();
         
         OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(world, x, z + 1);
-        if (ownedChunk != null && ownedChunk.owner.name.equals(player))
+        if (ownedChunk != null && ownedChunk.owner.name.equals(player)) {
             return false;
+        }
         
         ownedChunk = ChunkOwn.findOwnedChunk(world, x, z - 1);
-        if (ownedChunk != null && ownedChunk.owner.name.equals(player))
+        if (ownedChunk != null && ownedChunk.owner.name.equals(player)) {
             return false;
+        }
         
         ownedChunk = ChunkOwn.findOwnedChunk(world, x + 1, z);
-        if (ownedChunk != null && ownedChunk.owner.name.equals(player))
+        if (ownedChunk != null && ownedChunk.owner.name.equals(player)) {
             return false;
+        }
         
         ownedChunk = ChunkOwn.findOwnedChunk(world, x - 1, z);
-        if (ownedChunk != null && ownedChunk.owner.name.equals(player))
+        if (ownedChunk != null && ownedChunk.owner.name.equals(player)) {
             return false;
+        }
         
         return true;
     }

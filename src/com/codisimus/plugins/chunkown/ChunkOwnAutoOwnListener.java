@@ -17,18 +17,21 @@ public class ChunkOwnAutoOwnListener implements Listener {
     public void onBlockPlaceMonitor(BlockPlaceEvent event) {
         //Return if the Player is in a disabled World
         Player player = event.getPlayer();
-        if (!ChunkOwn.enabledInWorld(player.getWorld()))
+        if (!ChunkOwn.enabledInWorld(player.getWorld())) {
             return;
+        }
         
         Block block = event.getBlock();
         
         //Return if the Chunk is already Owned
         OwnedChunk chunk = ChunkOwn.findOwnedChunk(block);
-        if (chunk != null)
+        if (chunk != null) {
             return;
+        }
         
         ChunkOwner owner = ChunkOwn.findOwner(player.getName());
-        if (block.getTypeId() == (owner == null ? ChunkOwn.defaultAutoOwnBlock : owner.autoOwnBlock))
+        if (block.getTypeId() == (owner == null ? ChunkOwn.defaultAutoOwnBlock : owner.autoOwnBlock)) {
             ChunkOwnCommand.buy(player, block.getChunk());
+        }
     }
 }

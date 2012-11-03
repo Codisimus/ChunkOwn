@@ -76,8 +76,9 @@ public class Econ {
             economy.withdrawPlayer(name, amount);
         }
         
-        if (amount > 0)
+        if (amount > 0) {
             player.sendMessage(format(amount)+" has been withdrawn from your account");
+        }
         return true;
     }
     
@@ -90,8 +91,9 @@ public class Econ {
     public static void refund(Player player, double amount) {
         String name = player.getName();
         
-        if (economy != null)
+        if (economy != null) {
             economy.depositPlayer(name, amount);
+        }
         
         player.sendMessage(format(amount)+"has been refunded to your account");
     }
@@ -106,7 +108,6 @@ public class Econ {
         String price = format(getSellPrice(name));
         
         sell(name);
-        
         player.sendMessage(ChunkOwnMessages.sell.replace("<price>", price));
     }
     
@@ -116,8 +117,9 @@ public class Econ {
      * @param name The name of the Player who is selling
      */
     public static void sell(String name) {
-        if (economy != null)
+        if (economy != null) {
             economy.depositPlayer(name, getSellPrice(name));
+        }
     }
     
     /**
@@ -132,8 +134,9 @@ public class Econ {
 
         //Notify the Seller
         Player seller = ChunkOwn.server.getPlayer(owner);
-        if (seller != null)
+        if (seller != null) {
             seller.sendMessage(ChunkOwnMessages.adminSold.replace("<price>", price));
+        }
         
         admin.sendMessage(ChunkOwnMessages.adminSell.replace("<price>", price));
     }
@@ -145,10 +148,7 @@ public class Econ {
      * @return The String of the amount + currency name
      */
     public static String format(double amount) {
-        if (economy == null)
-            return "free";
-        
-        return economy.format(amount).replace(".00", "");
+        return economy == null ? "free" : economy.format(amount).replace(".00", "");
     }
     
     /**
@@ -158,10 +158,9 @@ public class Econ {
      * @return The calculated BuyPrice
      */
     public static double getBuyPrice(String player) {
-        if (ChunkOwn.hasPermission(player, "free"))
-            return 0;
-        
-        return buyPrice * Math.pow(buyMultiplier, ChunkOwn.getChunkCounter(player));
+        return ChunkOwn.hasPermission(player, "free")
+                ? 0
+                : buyPrice * Math.pow(buyMultiplier, ChunkOwn.getChunkCounter(player));
     }
     
     /**
@@ -171,10 +170,9 @@ public class Econ {
      * @return The calculated SellPrice
      */
     public static double getSellPrice(String player) {
-        if (ChunkOwn.hasPermission(player, "free"))
-            return 0;
-        
-        return sellPrice * Math.pow(sellMultiplier, ChunkOwn.getChunkCounter(player));
+        return ChunkOwn.hasPermission(player, "free")
+                ? 0
+                : sellPrice * Math.pow(sellMultiplier, ChunkOwn.getChunkCounter(player));
     }
     
     /**
@@ -187,22 +185,23 @@ public class Econ {
         double price;
         
         switch (addon) {
-            case BLOCKPVP: price = blockPvP; break;
-            case BLOCKPVE: price = blockPvE; break;
-            case BLOCKEXPLOSIONS: price = blockExplosions; break;
-            case LOCKCHESTS: price = lockChests; break;
-            case LOCKDOORS: price = lockDoors; break;
-            case DISABLEBUTTONS: price = disableButtons;  break;
-            case DISABLEPISTONS: price = disablePistons; break;
-            case ALARM: price = alarm; break;
-            case HEAL: price = heal; break;
-            case FEED: price = feed; break;
-            case NOTIFY: price = notify; break;
-            default: price = -2; break;
+        case BLOCKPVP: price = blockPvP; break;
+        case BLOCKPVE: price = blockPvE; break;
+        case BLOCKEXPLOSIONS: price = blockExplosions; break;
+        case LOCKCHESTS: price = lockChests; break;
+        case LOCKDOORS: price = lockDoors; break;
+        case DISABLEBUTTONS: price = disableButtons;  break;
+        case DISABLEPISTONS: price = disablePistons; break;
+        case ALARM: price = alarm; break;
+        case HEAL: price = heal; break;
+        case FEED: price = feed; break;
+        case NOTIFY: price = notify; break;
+        default: price = -2; break;
         }
         
-        if (price == -1)
+        if (price == -1) {
             price = 0;
+        }
         
         return price;
     }

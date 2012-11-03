@@ -17,10 +17,10 @@ public class ChunkOwnExplosionListener implements Listener {
     public void onEntityExplode(EntityExplodeEvent event) {
         Iterator<Block> itr = event.blockList().iterator();
         while (itr.hasNext()) {
-            
             OwnedChunk chunk = ChunkOwn.findOwnedChunk(itr.next());
-            if (chunk != null && chunk.owner.blockExplosions)
+            if (chunk != null && chunk.owner.blockExplosions) {
                 itr.remove();
+            }
         }
     }
 }

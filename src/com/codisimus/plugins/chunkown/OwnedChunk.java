@@ -54,8 +54,9 @@ public class OwnedChunk {
      */
     private void setOwner(String player) {
         owner = ChunkOwn.findOwner(player);
-        if (owner == null)
+        if (owner == null) {
             owner = new ChunkOwner(player);
+        }
         
         owner.chunkCounter++;
     }
@@ -69,24 +70,32 @@ public class OwnedChunk {
      */
     public boolean isCoOwner(Player player) {
         //Check to see if the Player is a Co-owner
-        for (String coOwner: owner.coOwners)
-            if (coOwner.equalsIgnoreCase(player.getName()))
+        for (String coOwner: owner.coOwners) {
+            if (coOwner.equalsIgnoreCase(player.getName())) {
                 return true;
+            }
+        }
 
         //Return true if the Player is in a group that has Co-ownership
-        for (String group: owner.groups)
-            if (ChunkOwn.permission.playerInGroup(player, group))
+        for (String group: owner.groups) {
+            if (ChunkOwn.permission.playerInGroup(player, group)) {
                 return true;
+            }
+        }
         
         //Check to see if the Player is a Co-owner
-        for (String coOwner: coOwners)
-            if (coOwner.equalsIgnoreCase(player.getName()))
+        for (String coOwner: coOwners) {
+            if (coOwner.equalsIgnoreCase(player.getName())) {
                 return true;
+            }
+        }
 
         //Return true if the Player is in a group that has Co-ownership
-        for (String group: groups)
-            if (ChunkOwn.permission.playerInGroup(player, group))
+        for (String group: groups) {
+            if (ChunkOwn.permission.playerInGroup(player, group)) {
                 return true;
+            }
+        }
         
         //Return false because the Player is not a coowner
         return false;
@@ -94,23 +103,20 @@ public class OwnedChunk {
     
     public void save() {
         String coOwnersString = "";
-        for (String string: coOwners)
+        for (String string: coOwners) {
             coOwnersString = coOwnersString+"'"+string;
-        if (coOwnersString.isEmpty())
-            coOwnersString = "none";
-        else
-            coOwnersString = coOwnersString.substring(1);
+        }
+        coOwnersString = coOwnersString.isEmpty() ? "none" : coOwnersString.substring(1);
         
         String groupsString = "";
-        for (String string: groups)
+        for (String string: groups) {
             groupsString = groupsString+"'"+string;
-        if (groupsString.isEmpty())
-            groupsString = "none";
-        else
-            groupsString = groupsString.substring(1);
+        }
+        groupsString = groupsString.isEmpty() ? "none" : groupsString.substring(1);
         
-        if (!ChunkOwn.savedData.containsKey(world))
+        if (!ChunkOwn.savedData.containsKey(world)) {
             ChunkOwn.savedData.put(world, new Properties());
+        }
         Properties p = ChunkOwn.savedData.get(world);
         p.setProperty(x+"'"+z, owner.name+","+coOwnersString+","+groupsString);
         
