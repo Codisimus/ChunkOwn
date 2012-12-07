@@ -147,7 +147,7 @@ public class ChunkOwn extends JavaPlugin {
 
     /**
      * Loads settings from the config.properties file
-     * 
+     *
      */
     public static void loadSettings() {
         FileInputStream fis = null;
@@ -204,6 +204,7 @@ public class ChunkOwn extends JavaPlugin {
             disownTime = Integer.parseInt(loadValue("AutoDisownTimer"));
             revertChunks = Boolean.parseBoolean(loadValue("RevertChunks"));
             ChunkOwnMovementListener.rate = Integer.parseInt(loadValue("RegenerateRate"));
+            ChunkOwnCommand.wgSupport = Boolean.parseBoolean(loadValue("WorldGuardSupport"));
 
             String data = loadValue("EnabledOnlyInWorlds");
             if (!data.isEmpty()) {
@@ -240,10 +241,10 @@ public class ChunkOwn extends JavaPlugin {
             return null;
         }
     }
-    
+
     /**
      * Returns true if the given Player has the specific permission
-     * 
+     *
      * @param player The Player who is being checked for permission
      * @param type The String of the permission, ex. admin
      * @return True if the given Player has the specific permission
@@ -254,7 +255,7 @@ public class ChunkOwn extends JavaPlugin {
 
     /**
      * Returns true if the given Player has the specific permission
-     * 
+     *
      * @param player The Player who is being checked for permission
      * @param type The String of the permission, ex. admin
      * @return True if the given Player has the specific permission
@@ -262,10 +263,10 @@ public class ChunkOwn extends JavaPlugin {
     public static boolean hasPermission(Player player, String type) {
         return permission.has(player, "chunkown."+type);
     }
-    
+
     /**
-     * Returns true if the given Player has permission to buy the given AddOn 
-     * 
+     * Returns true if the given Player has permission to buy the given AddOn
+     *
      * @param player The Player who is being checked for permission
      * @param addOn The given AddOn
      * @return True if the given Player has the specific permission
@@ -290,7 +291,7 @@ public class ChunkOwn extends JavaPlugin {
         if (hasPermission(player, "limit.-1")) {
             return -1;
         }
-        
+
         //Start at 100 and work down until a limit node is found
         for (int i = 100; i >= 0; i--) {
             if (hasPermission(player, "limit."+i)) {
@@ -301,12 +302,12 @@ public class ChunkOwn extends JavaPlugin {
         //No limit if a limit node is not found
         return -1;
     }
-    
+
     /**
      * Returns true if Player has permission to build*
      * *build also refers to many griefing events**
      * **all events can be found in Listener Classes
-     * 
+     *
      * @param player The Player who is trying to build
      * @param block The Block the ChunkOwnListener is modifying
      * @return True if Player has permission to 'build'
@@ -316,20 +317,20 @@ public class ChunkOwn extends JavaPlugin {
         if (!enabledInWorld(block.getWorld())) {
             return true;
         }
-        
+
         //Allow building if Player has admin node
         if (player != null && hasPermission(player, "admin")) {
             return true;
         }
-        
+
         //Allow building if below the lower limit
         if (block.getY() < ChunkOwn.lowerLimit) {
             return true;
         }
-        
+
         //See if the area is owned by a Player
         OwnedChunk ownedChunk = findOwnedChunk(block.getChunk());
-        
+
         //If unowned, deny building if the Player cannot build on unclaimed land
         if (ownedChunk == null) {
             if (player != null && hasPermission(player, "mustowntobuild")) {
@@ -339,12 +340,12 @@ public class ChunkOwn extends JavaPlugin {
                 return true;
             }
         }
-        
+
         //Deny building if no Player can be determined (Mob)
         if (player == null) {
             return false;
         }
-        
+
         //Allow building if the Player is an Owner or Co-owner of the land
         if (ownedChunk.owner.name.equals(player.getName())) {
             return true;
@@ -363,17 +364,17 @@ public class ChunkOwn extends JavaPlugin {
     private static void loadAll() {
         loadSettings();
         loadChunkOwners();
-        
+
         for (World world: worlds.isEmpty() ? server.getWorlds() : worlds) {
             loadData(world.getName());
         }
-        
+
         loadLastSeen();
     }
-    
+
     /**
      * Loads ChunkOwners from file
-     * 
+     *
      */
     public static void loadChunkOwners() {
         for (File file: new File(dataFolder+"/ChunkOwners/").listFiles()) {
@@ -388,9 +389,9 @@ public class ChunkOwn extends JavaPlugin {
 
                     //Construct a new ChunkOwner using the file name
                     ChunkOwner owner = new ChunkOwner(name.substring(0, name.length() - 11));
-                    
+
                     owner.autoOwnBlock = Integer.parseInt(p.getProperty("AutoOwnBlock"));
-                    
+
                     owner.blockPvP = Boolean.parseBoolean(p.getProperty("BlockPvP"));
                     owner.blockPvE = Boolean.parseBoolean(p.getProperty("BlockPvE"));
                     owner.blockExplosions = Boolean.parseBoolean(p.getProperty("BlockExplosions"));
@@ -402,7 +403,7 @@ public class ChunkOwn extends JavaPlugin {
                     owner.heal = Boolean.parseBoolean(p.getProperty("RegenerateHealth"));
                     owner.feed = Boolean.parseBoolean(p.getProperty("RegenerateHunger"));
                     owner.notify = Boolean.parseBoolean(p.getProperty("NotifyWhenInOwnedChunk"));
-                    
+
                     //Convert the coOwners data into a LinkedList for the ChunkOwner
                     String data = p.getProperty("CoOwners");
                     if (!data.equals("none")) {
@@ -429,7 +430,7 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     /**
      * Reads save file to load ChunkOwn data for given World
      *
@@ -440,7 +441,7 @@ public class ChunkOwn extends JavaPlugin {
         if (!enabledInWorld(w)) {
             return;
         }
-        
+
         FileInputStream fis = null;
         try {
             File file = new File(dataFolder+"/OwnedChunks/"+world+".properties");
@@ -448,19 +449,19 @@ public class ChunkOwn extends JavaPlugin {
                 convertOldData(world);
                 return;
             }
-            
+
             fis = new FileInputStream(file);
             Properties data = new Properties();
             data.load(fis);
             savedData.put(world, data);
-            
+
             for (String key: data.stringPropertyNames()) {
                 String[] keyData = key.split("'");
                 String[] valueData = data.getProperty(key).split(",");
-                
+
                 //Construct a new OwnedChunk using the World name and x/z coordinates
                 OwnedChunk ownedChunk = new OwnedChunk(world, Integer.parseInt(keyData[0]), Integer.parseInt(keyData[1]), valueData[0]);
-                
+
                 //Convert the coOwners data into a LinkedList for the OwnedChunk
                 if (!valueData[1].equals("none")) {
                     ownedChunk.coOwners = new LinkedList<String>(Arrays.asList(valueData[1].split("'")));
@@ -484,7 +485,7 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     /**
      * Reads old save file to load ChunkOwn data for given World
      *
@@ -497,7 +498,7 @@ public class ChunkOwn extends JavaPlugin {
             if (!file.exists()) {
                 return;
             }
-            
+
             logger.severe("Converting outdated Owned Chunks data");
             bReader = new BufferedReader(new FileReader(file));
 
@@ -511,13 +512,13 @@ public class ChunkOwn extends JavaPlugin {
                     OwnedChunk ownedChunk = new OwnedChunk(world, Integer.parseInt(data[0]), Integer.parseInt(data[1]), data[2]);
 
                     //Convert the coOwners data into a LinkedList for the OwnedChunk
-                    if (!data[3].equals("none")) 
+                    if (!data[3].equals("none"))
                         ownedChunk.coOwners = new LinkedList<String>(Arrays.asList(data[3].split(",")));
 
                     //Convert the groups data into a LinkedList for the OwnedChunk
-                    if (!data[4].equals("none")) 
+                    if (!data[4].equals("none"))
                         ownedChunk.groups = new LinkedList<String>(Arrays.asList(data[4].split(",")));
-                    
+
                     ownedChunks.put(world+"'"+ownedChunk.x+"'"+ownedChunk.z, ownedChunk);
                 } catch (Exception corruptedData) {
                     logger.severe("Corrupted data: "+line);
@@ -535,10 +536,10 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     /**
      * Loads last seen data from file
-     * 
+     *
      */
     public static void loadLastSeen() {
         lastDaySeen = new Properties();
@@ -553,7 +554,7 @@ public class ChunkOwn extends JavaPlugin {
             if (!file.exists()) {
                 file.createNewFile();
             }
-            
+
             fis = new FileInputStream(file);
             lastDaySeen.load(fis);
         } catch (Exception ex) {
@@ -565,32 +566,32 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     /**
      * Reloads ChunkOwn data
-     * 
+     *
      */
     public static void rl() {
         rl(null);
     }
-    
+
     /**
      * Reloads ChunkOwn data
-     * 
-     * @param player The Player reloading the data 
+     *
+     * @param player The Player reloading the data
      */
     public static void rl(Player player) {
         savedData.clear();
         ownedChunks.clear();
         chunkOwners.clear();
         loadAll();
-        
+
         logger.info("reloaded");
         if (player != null) {
             player.sendMessage("ChunkOwn reloaded");
         }
     }
-    
+
     /**
      * Writes data for specified World to save file
      * Old file is overwritten
@@ -604,7 +605,7 @@ public class ChunkOwn extends JavaPlugin {
                     throw new Exception("File creation failed!");
                 }
             }
-            
+
             fos = new FileOutputStream(file);
             savedData.get(world).store(fos, null);
         } catch (Exception saveFailed) {
@@ -617,18 +618,18 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     /**
      * Writes the given ChunkOwner to its save file
      * If the file already exists, it is overwritten
-     * 
+     *
      * @param owner The given ChunkOwner
      */
     static void saveChunkOwner(ChunkOwner owner) {
         FileOutputStream fos = null;
         try {
             Properties p = new Properties();
-            
+
             p.setProperty("AutoOwnBlock", String.valueOf(owner.autoOwnBlock));
             p.setProperty("BlockPvP", String.valueOf(owner.blockPvP));
             p.setProperty("BlockPvE", String.valueOf(owner.blockExplosions));
@@ -641,7 +642,7 @@ public class ChunkOwn extends JavaPlugin {
             p.setProperty("RegenerateHealth", String.valueOf(owner.heal));
             p.setProperty("RegenerateHunger", String.valueOf(owner.feed));
             p.setProperty("NotifyWhenInOwnedChunk", String.valueOf(owner.notify));
-            
+
             String coOwners = "";
             if (owner.coOwners.isEmpty()) {
                 coOwners = "none";
@@ -675,7 +676,7 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     /**
      * Writes the Map of last seen data to the save file
      * Old file is over written
@@ -687,35 +688,35 @@ public class ChunkOwn extends JavaPlugin {
             logger.severe("Failed to save lastseen.properties");
         }
     }
-    
+
     /**
      * Returns the amount of Chunks that the given Player owns
-     * 
+     *
      * @return The amount of Chunks that the given Player owns
      */
     public static int getChunkCounter(String player) {
         ChunkOwner owner = findOwner(player);
         return owner == null ? 0 : owner.chunkCounter;
     }
-    
+
     /**
      * Returns the ChunkOwner object for the Chunk which contains the given Block
      * returns null if the Chunk is not claimed or if the Block is below the Own Lower Limit
-     * 
+     *
      * @param block The block that may be in an OwnedChunk
      */
     public static ChunkOwner findOwner(Block block) {
         if (block.getY() < lowerLimit) {
             return null;
         }
-        
+
         return findOwner(block.getChunk());
     }
-    
+
     /**
      * Returns the ChunkOwner object for the given Chunk
      * returns null if the Chunk is not claimed
-     * 
+     *
      * @param chunk The Chunk that the OwnedChunk would represent
      */
     public static ChunkOwner findOwner(Chunk chunk) {
@@ -723,41 +724,41 @@ public class ChunkOwn extends JavaPlugin {
         if (ownedChunk == null) {
             return null;
         }
-        
+
         return ownedChunk.owner;
     }
-    
+
     /**
      * Returns the ChunkOwner object for the given Player Name
      * returns null if the ChunkOwner does not exist
-     * 
+     *
      * @param player The ChunkOwner for the given Player Name
      */
     public static ChunkOwner findOwner(String player) {
         return chunkOwners.get(player);
     }
-    
+
     /**
      * Returns the ChunkOwner object for the given Player Name
      * A new ChunkOwner is created if one does not exist
-     * 
+     *
      * @param player The ChunkOwner for the given Player Name
      */
     public static ChunkOwner getOwner(String player) {
         ChunkOwner owner = findOwner(player);
-        
+
         if (owner == null) {
             owner = new ChunkOwner(player);
             chunkOwners.put(player, owner);
         }
-        
+
         return owner;
     }
-    
+
     /**
      * Returns the OwnedChunk object for the given Chunk
      * returns null if the Chunk is not claimed
-     * 
+     *
      * @param world The name of the World the OwnedChunk is in
      * @param x The x-coordinate of the OwnedChunk
      * @param z The z-coordinate of the OwnedChunk
@@ -766,30 +767,30 @@ public class ChunkOwn extends JavaPlugin {
     public static OwnedChunk findOwnedChunk(String world, int x, int z) {
         return findOwnedChunk(server.getWorld(world).getChunkAt(x, z));
     }
-    
+
     /**
      * Returns the OwnedChunk object for the Chunk which contains the given Block
      * returns null if the Chunk is not claimed or if the Block is below the Own Lower Limit
-     * 
+     *
      * @param block The block that may be in an OwnedChunk
      */
     public static OwnedChunk findOwnedChunk(Block block) {
         return (block.getY() < lowerLimit) ? null : findOwnedChunk(block.getChunk());
     }
-    
+
     /**
      * Returns the OwnedChunk object for the given Chunk
      * returns null if the Chunk is not claimed
-     * 
+     *
      * @param chunk The Chunk that the OwnedChunk would represent
      */
     public static OwnedChunk findOwnedChunk(Chunk chunk) {
         return ownedChunks.get(chunkToString(chunk));
     }
-    
+
     /**
      * Adds the OwnedChunk from the saved data
-     * 
+     *
      * @param ownedChunk The OwnedChunk to add
      */
     public static void addOwnedChunk(OwnedChunk ownedChunk) {
@@ -798,26 +799,26 @@ public class ChunkOwn extends JavaPlugin {
         if (!enabledInWorld(world)) {
             return;
         }
-        
+
         ownedChunk.saveSnapshot();
         ownedChunks.put(ownedChunk.world+"'"+ownedChunk.x+"'"+ownedChunk.z, ownedChunk);
         ownedChunk.save();
         ownedChunk.owner.save();
     }
-    
+
     /**
      * Removes the OwnedChunk from the saved data
-     * 
+     *
      * @param ownedChunk The OwnedChunk to be removed
      */
     public static void removeOwnedChunk(OwnedChunk ownedChunk) {
         Chunk chunk = server.getWorld(ownedChunk.world).getChunkAt(ownedChunk.x, ownedChunk.z);
         removeOwnedChunk(chunk, ownedChunk);
     }
-    
+
     /**
      * Removes the OwnedChunk from the saved data
-     * 
+     *
      * @param world The name of the World the OwnedChunk is in
      * @param x The x-coordinate of the OwnedChunk
      * @param z The z-coordinate of the OwnedChunk
@@ -827,20 +828,20 @@ public class ChunkOwn extends JavaPlugin {
         OwnedChunk ownedChunk = ownedChunks.get(chunkToString(chunk));
         removeOwnedChunk(chunk, ownedChunk);
     }
-    
+
     /**
      * Removes the OwnedChunk from the saved data
-     * 
+     *
      * @param chunk The Chunk that the OwnedChunk would represent
      */
     public static void removeOwnedChunk(Chunk chunk) {
         OwnedChunk ownedChunk = ownedChunks.get(chunkToString(chunk));
         removeOwnedChunk(chunk, ownedChunk);
     }
-    
+
     /**
      * Removes the OwnedChunk from the saved data
-     * 
+     *
      * @param chunk The Chunk that the OwnedChunk would represent
      */
     private static void removeOwnedChunk(Chunk chunk, OwnedChunk ownedChunk) {
@@ -856,21 +857,21 @@ public class ChunkOwn extends JavaPlugin {
         }
         save(ownedChunk.world);
     }
-    
+
     /**
      * Retrieves a list of Chunks that the given Player owns
-     * 
+     *
      * @param player The name of the given Player
      * @return The list of Chunks
      */
     public static LinkedList<Chunk> getOwnedChunks(String player) {
         LinkedList<Chunk> chunks = new LinkedList<Chunk>();
-        
+
         int owned = getChunkCounter(player);
         if (owned == 0) {
             return chunks;
         }
-        
+
         for (OwnedChunk chunk: ownedChunks.values()) {
             if (chunk.owner.name.equals(player)) {
                 chunks.add(server.getWorld(chunk.world).getChunkAt(chunk.x, chunk.z));
@@ -881,24 +882,24 @@ public class ChunkOwn extends JavaPlugin {
                 }
             }
         }
-        
+
         return chunks;
     }
-    
+
     /**
      * Returns a Collection of all OwnedChunks
-     * 
+     *
      * @return A Collection of all OwnedChunks
      */
     public static Collection<OwnedChunk> getOwnedChunks() {
         return ownedChunks.values();
     }
-    
+
     /**
      * Returns true if all connected Owned Chunks are grouped in sizes that equal or exceed the chunkSize
      * True is returned if specific group sizes are not required
      * True is returned if the ChunkList is empty
-     * 
+     *
      * @return true if all Chunk groups are large enough
      */
     public static boolean canBuyLoner(LinkedList<Chunk> chunkList) {
@@ -906,21 +907,21 @@ public class ChunkOwn extends JavaPlugin {
         if (groupSize < 2) {
             return true;
         }
-        
+
         while (!chunkList.isEmpty()) {
             //Return false if the group size is not large enough
             if (getSize(chunkList, chunkList.removeFirst()) < groupSize) {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Returns the total amount of connected Chunks that this Chunk is included in
      * A Chunk is connected if it is adjacent to one of the 4 sides and has the same owner
-     * 
+     *
      * @return The Chunk Size
      */
     private static int getSize(LinkedList<Chunk> owned, Chunk chunk) {
@@ -928,38 +929,38 @@ public class ChunkOwn extends JavaPlugin {
         World world = chunk.getWorld();
         int x = chunk.getX();
         int z = chunk.getZ();
-        
+
         //Compass directions may not be accurate but you get the idea
         //Check for connected Chunks to the North
         chunk = world.getChunkAt(x + 1, z);
         if (owned.remove(chunk)) {
             size = size + getSize(owned, chunk);
         }
-        
+
         //Check for connected Chunks to the East
         chunk = world.getChunkAt(x, z + 1);
         if (owned.remove(chunk)) {
             size = size + getSize(owned, chunk);
         }
-        
+
         //Check for connected Chunks to the South
         chunk = world.getChunkAt(x - 1, z);
         if (owned.remove(chunk)) {
             size = size + getSize(owned, chunk);
         }
-        
+
         //Check for connected Chunks to the West
         chunk = world.getChunkAt(x, z - 1);
         if (owned.remove(chunk)) {
             size = size + getSize(owned, chunk);
         }
-        
+
         return size;
     }
-    
+
     /**
      * Returns the number of the current day in the AD time period
-     * 
+     *
      * @return The number of the current day in the AD time period
      */
     public static int getDayAD() {
@@ -968,17 +969,17 @@ public class ChunkOwn extends JavaPlugin {
         int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
         return (int) ((yearAD - 1) * 365.4) + dayOfYear;
     }
-    
+
     /**
      * Returns true if this plugin is enabled in the given World
-     * 
+     *
      * @param world The given World
      * @return True if this plugin is enabled in the given World
      */
     public static boolean enabledInWorld(World world) {
         return worlds.isEmpty() || worlds.contains(world);
     }
-    
+
     /**
      * Checks for Players who have not logged on within the given amount of time
      * These Players will have their OwnedChunks automatically disowned
@@ -988,13 +989,13 @@ public class ChunkOwn extends JavaPlugin {
         if (disownTime <= 0) {
             return;
         }
-        
+
         //Repeat every day
     	server.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
     	    public void run() {
                 int cutoffDay = getDayAD() - disownTime;
-                
+
                 for (String key: lastDaySeen.stringPropertyNames()) {
                     if (Integer.parseInt(lastDaySeen.getProperty(key)) < cutoffDay) {
                         logger.info("Clearing Chunks that are owned by " + key);
@@ -1006,25 +1007,25 @@ public class ChunkOwn extends JavaPlugin {
     	    }
     	}, 0L, 1728000L);
     }
-    
+
     /**
      * Saves a snapshot of the given Chunk
-     * 
+     *
      */
     public static void saveSnapshot(Chunk chunk) {
         saveSnapshot(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
     }
-    
+
     /**
      * Saves a snapshot of the given chunk
-     * 
+     *
      */
     public static void saveSnapshot(String chunkWorld, int chunkX, int chunkZ) {
         //Return if Reverting Chunks is disabled
         if (!revertChunks) {
             return;
         }
-        
+
         FileOutputStream fos = null;
         try {
             //Create the Directory if it does not exist
@@ -1032,7 +1033,7 @@ public class ChunkOwn extends JavaPlugin {
             if (!file.isDirectory()) {
                 file.mkdirs();
             }
-            
+
             //Return if there is already a snapshot saved for this Chunk
             file = new File(dataFolder+"/Chunk Snapshots/"+chunkWorld+"/"+chunkX+"-"+chunkZ+".cota");
             if (file.exists()) {
@@ -1040,20 +1041,20 @@ public class ChunkOwn extends JavaPlugin {
             } else {
                 file.createNewFile();
             }
-            
+
             //Compute the size of the snapshot area
             World world = server.getWorld(chunkWorld);
             int maxHeight = world.getMaxHeight();
             int size = 256 * (maxHeight - lowerLimit);
-            
+
             byte[] typeArray = new byte[size];
             byte[] dataArray = new byte[size];
             int index = 0;
-            
+
             int x = 16 * chunkX;
             int z = 16 * chunkZ;
             /* (x, z) is the corner of the Chunk */
-            
+
             for (int i = 0; i < 16; i++) {
                 for (int j = 0; j < 16; j++) {
                     int y = world.getHighestBlockYAt(x, z); /* Array stores AIR as default */
@@ -1065,28 +1066,28 @@ public class ChunkOwn extends JavaPlugin {
                         //Store the Block's type ID
                         byte type = (byte)world.getBlockAt(x+i, y, z+j).getTypeId();
                         typeArray[index] = type;
-                        
+
                         //Store the data of the Block
                         byte data = world.getBlockAt(x+i, y, z+j).getData();
                         dataArray[index] = data;
-                        
+
                         index++;
                         y--;
                     }
                 }
             }
-            
+
             //Save the Type Array to file
             fos = new FileOutputStream(file);
             fos.write(typeArray);
             fos.close();
-            
+
             //Save the Data Array to file
             file = new File(dataFolder+"/Chunk Snapshots/"+chunkWorld+"/"+chunkX+"-"+chunkZ+".coda");
             if (!file.exists()) {
                 file.createNewFile();
             }
-            
+
             fos = new FileOutputStream(file);
             fos.write(dataArray);
         } catch (Exception ex) {
@@ -1099,25 +1100,25 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     /**
      * Reverts given Chunk back to it's saved snapshot
-     * 
+     *
      */
     public static void revertChunk(Chunk chunk) {
         revertChunk(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
     }
-    
+
     /**
      * Reverts given Chunk back to it's saved snapshot
-     * 
+     *
      */
     public static void revertChunk(String chunkWorld, int chunkX, int chunkZ) {
         //Return if Reverting Chunks is disabled
         if (!revertChunks) {
             return;
         }
-        
+
         InputStream is = null;
         try {
             File file = new File(dataFolder+"/Chunk Snapshots/"+chunkWorld+"/"+chunkX+"-"+chunkZ+".cota");
@@ -1125,14 +1126,14 @@ public class ChunkOwn extends JavaPlugin {
                 logger.info("Unable to revert Chunk '"+chunkWorld+","+chunkX+","+chunkZ+" because no snapshot was found.");
                 return;
             }
-            
+
             int length = (int)file.length();
-            
+
             byte[] typeArray = new byte[length];
             byte[] dataArray = new byte[length];
-            
+
             is = new FileInputStream(file);
-            
+
             int offset = 0;
             int numRead = 0;
             while (offset < length && (numRead = is.read(typeArray, offset, length-offset)) >= 0) {
@@ -1143,17 +1144,17 @@ public class ChunkOwn extends JavaPlugin {
             if (offset < length) {
                 throw new IOException("Could not completely read file "+file.getName());
             }
-            
+
             is.close();
-            
+
             file = new File(dataFolder+"/Chunk Snapshots/"+chunkWorld+"/"+chunkX+"-"+chunkZ+".coda");
             if (!file.exists()) {
                 logger.info("Unable to revert Chunk '"+chunkWorld+","+chunkX+","+chunkZ+" because no snapshot was found.");
                 return;
             }
-            
+
             is = new FileInputStream(file);
-            
+
             offset = 0;
             numRead = 0;
             while (offset < length && (numRead = is.read(dataArray, offset, length-offset)) >= 0) {
@@ -1164,10 +1165,10 @@ public class ChunkOwn extends JavaPlugin {
             if (offset < length) {
                 throw new IOException("Could not completely read file "+file.getName());
             }
-            
+
             World world = server.getWorld(chunkWorld);
             int maxHeight = world.getMaxHeight(); /* Hopefully the MaxHeight was not modified */
-            
+
             int lowerLimit = maxHeight - (length / 256);
 
             int index = 0;
@@ -1184,7 +1185,7 @@ public class ChunkOwn extends JavaPlugin {
                     }
                 }
             }
-            
+
             //Delete both snapshot files
             file.delete();
             new File(dataFolder+"/Chunk Snapshots/"+chunkWorld+"/"+chunkX+"-"+chunkZ+".cota").delete();
@@ -1198,8 +1199,21 @@ public class ChunkOwn extends JavaPlugin {
             }
         }
     }
-    
+
     static String chunkToString(Chunk chunk) {
         return chunk.getWorld().getName()+"'"+chunk.getX()+"'"+chunk.getZ();
+    }
+
+    public static LinkedList<Block> getBlocks(Chunk chunk) {
+        LinkedList<Block> blockList = new LinkedList<Block>();
+        World w = chunk.getWorld();
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = lowerLimit; y < w.getMaxHeight(); y++) {
+                    blockList.add(w.getBlockAt(x, y, z));
+                }
+            }
+        }
+        return blockList;
     }
 }

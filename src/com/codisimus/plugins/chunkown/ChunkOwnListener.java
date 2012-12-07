@@ -26,7 +26,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockPlaceEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onBlockPlace(BlockPlaceEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -38,7 +38,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockBreakEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -50,7 +50,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The SignChangeEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onSignChange(SignChangeEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -62,7 +62,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockIgniteEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onBlockIgnite(BlockIgniteEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -74,7 +74,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockSpreadEvent that occurred
      */
-    @EventHandler(ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler(ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onBlockSpread(BlockSpreadEvent event) {
         if (event.getSource().getType() == Material.FIRE && !ChunkOwn.canBuild(null, event.getBlock())) {
             event.setCancelled(true);
@@ -86,7 +86,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockBurnEvent that occurred
      */
-    @EventHandler(ignoreCancelled=true, priority=EventPriority.HIGHEST)
+    @EventHandler(ignoreCancelled=true, priority=EventPriority.LOWEST)
     public void onBlockBurn(BlockBurnEvent event) {
         if (!ChunkOwn.canBuild(null, event.getBlock())) {
             event.setCancelled(true);
@@ -98,7 +98,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The BlockIgniteEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onEggThrow(PlayerEggThrowEvent event) {
         Player player = event.getPlayer();
         if (!ChunkOwn.canBuild(player, player.getTargetBlock(null, 10))) {
@@ -111,7 +111,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PlayerBucketEmptyEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked().getRelative(event.getBlockFace()))) {
             event.setCancelled(true);
@@ -123,7 +123,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PlayerBucketFillEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onPlayerBucketFill(PlayerBucketFillEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked())) {
             event.setCancelled(true);
@@ -135,7 +135,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The PaintingBreakByEntityEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onPaintingBreak(PaintingBreakByEntityEvent event) {
         Player player = null;
         Entity entity = event.getRemover();
@@ -153,7 +153,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The VehicleDamageEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onVehicleDamage(VehicleDamageEvent event) {
         Player player = null;
         Entity entity = event.getAttacker();
@@ -171,7 +171,7 @@ public class ChunkOwnListener implements Listener {
      * 
      * @param event The VehicleDestroyEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
     public void onVehicleDestroy(VehicleDestroyEvent event) {
         Player player = null;
         Entity entity = event.getAttacker();

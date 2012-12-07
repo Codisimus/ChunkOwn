@@ -16,7 +16,7 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
  * @author Codisimus
  */
 public class ChunkOwnDamageListener implements Listener {
-    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         //Return if the Enitity damaged is not a Player
         Entity wounded = event.getEntity();
@@ -52,11 +52,11 @@ public class ChunkOwnDamageListener implements Listener {
         }
     }
 
-    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onProjectileLaunch(ProjectileLaunchEvent event) {
         switch (event.getEntityType()) {
         case ARROW: //Fall through
-        case LARGE_FIREBALL: //Fall through
+        case FIREBALL: //Fall through
         case SMALL_FIREBALL: break;
         default: return;
         }
@@ -73,7 +73,7 @@ public class ChunkOwnDamageListener implements Listener {
         }
     }
 
-    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onEntityTarget(EntityTargetLivingEntityEvent event) {
         //Return if the Event was not within an Owned Chunk
         OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getTarget().getLocation().getChunk());

@@ -14,7 +14,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
  * @author Codisimus
  */
 public class ChunkOwnInteractionListener implements Listener {
-    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         //Return if the Event was arm flailing
         Action action = event.getAction();

@@ -14,7 +14,7 @@ import org.bukkit.event.block.BlockPistonRetractEvent;
  * @author Codisimus
  */
 public class ChunkOwnPistonListener implements Listener {
-    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         List<Block> blocks = event.getBlocks();
         for (Block block: blocks) {
@@ -34,7 +34,7 @@ public class ChunkOwnPistonListener implements Listener {
         }
     }
     
-    @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPistonRetract(BlockPistonRetractEvent event) {
         if (event.isSticky()) {
             OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getBlock().getRelative(event.getDirection(), 2));

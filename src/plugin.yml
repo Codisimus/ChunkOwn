@@ -1,15 +1,16 @@
 name: ChunkOwn
 main: com.codisimus.plugins.chunkown.ChunkOwn
-version: 0.9.1
+version: 0.9.2
 author: Codisimus
 website: www.codisimus.com
 description: Simple area protection based on Chunks
 load: POSTWORLD
 softdepend: [Vault]
 commands:
-  chunk:
+  chunkown:
     description: Displays the ChunkOwn help page
     usage: /<command> help
+    aliases: [chunk, co]
 permissions:
   chunkown.buy:
     description: Needed to purchase Chunks (/chunk buy)
