@@ -7,7 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
-import org.bukkit.event.painting.PaintingBreakByEntityEvent;
+import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
@@ -135,14 +135,14 @@ public class ChunkOwnListener implements Listener {
      * @param event The PaintingBreakByEntityEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
-    public void onPaintingBreak(PaintingBreakByEntityEvent event) {
+    public void onPaintingBreak(HangingBreakByEntityEvent event) {
         Player player = null;
         Entity entity = event.getRemover();
         if (entity instanceof Player) {
             player = (Player)entity;
         }
 
-        if (!ChunkOwn.canBuild(player, event.getPainting().getLocation().getBlock())) {
+        if (!ChunkOwn.canBuild(player, event.getEntity().getLocation().getBlock())) {
             event.setCancelled(true);
         }
     }
