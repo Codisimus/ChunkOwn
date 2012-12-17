@@ -511,6 +511,9 @@ public class ChunkOwnCommand implements CommandExecutor {
         if (Econ.notify != -2 && owner.notify) {
             list = list.concat("Notify, ");
         }
+        if (Econ.notify != -2 && owner.notify) {
+            list = list.concat("NoAutoDisown, ");
+        }
 
         player.sendMessage(list.substring(0, list.length()-2));
 
@@ -828,6 +831,9 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
         if (ChunkOwn.hasPermission(player, AddOn.NOTIFY)) {
             player.sendMessage("§2/"+command+" buy notify§b Be notified when you enter owned land: "+Econ.format(Econ.getBuyPrice(AddOn.NOTIFY)));
+        }
+        if (ChunkOwn.hasPermission(player, AddOn.NOAUTODISOWN)) {
+            player.sendMessage("§2/"+command+" buy noautodisown§b Keep your land even if you become inactive: "+Econ.format(Econ.getBuyPrice(AddOn.NOAUTODISOWN)));
         }
 
         player.sendMessage("§2/"+command+" sell [addon]§b Sell an addon for "+Econ.moneyBack+"% of its buy price");
