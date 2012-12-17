@@ -10,7 +10,7 @@ import org.bukkit.event.block.BlockPistonRetractEvent;
 
 /**
  * Block Pistons within Owned Chunks which have protection
- * 
+ *
  * @author Codisimus
  */
 public class ChunkOwnPistonListener implements Listener {
@@ -24,7 +24,7 @@ public class ChunkOwnPistonListener implements Listener {
                 return;
             }
         }
-        
+
         int size = blocks.size();
         if (size != 0) {
             OwnedChunk chunk = ChunkOwn.findOwnedChunk(blocks.get(size - 1).getRelative(event.getDirection()));
@@ -33,7 +33,7 @@ public class ChunkOwnPistonListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPistonRetract(BlockPistonRetractEvent event) {
         if (event.isSticky()) {

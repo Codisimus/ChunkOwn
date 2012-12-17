@@ -1,6 +1,7 @@
 package com.codisimus.plugins.chunkown;
 
 import com.codisimus.plugins.chunkown.ChunkOwner.AddOn;
+import com.palmergames.bukkit.towny.Towny;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -193,10 +194,26 @@ public class ChunkOwnCommand implements CommandExecutor {
             if (plugin != null) {
                 WorldGuardPlugin wg = (WorldGuardPlugin) plugin;
                 for (Block block: ChunkOwn.getBlocks(chunk)) {
-                    wg.canBuild(player, block);
+                    if (!wg.canBuild(player, block)) {
+                        player.sendMessage(ChunkOwnMessages.worldGuard);
+                        return;
+                    }
                 }
             }
         }
+
+//        if (townySupport) {
+//            Plugin plugin = ChunkOwn.pm.getPlugin("Towny");
+//            if (plugin != null) {
+//                Towny towny = (Towny) plugin;
+//                for (Block block: ChunkOwn.getBlocks(chunk)) {
+//                    if (!towny.getTownyUniverse().getWorldMap().canBuild(player, block)) {
+//                        player.sendMessage(ChunkOwnMessages.towny);
+//                        return;
+//                    }
+//                }
+//            }
+//        }
 
         String name = player.getName();
 

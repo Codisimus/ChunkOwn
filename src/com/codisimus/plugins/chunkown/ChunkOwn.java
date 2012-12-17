@@ -179,6 +179,7 @@ public class ChunkOwn extends JavaPlugin {
             Econ.heal = Double.parseDouble(loadValue("RegenerateHealth"));
             Econ.feed = Double.parseDouble(loadValue("RegenerateHunger"));
             Econ.notify = Double.parseDouble(loadValue("NotifyWhenInOwnedChunk"));
+            Econ.noAutoDisown = Double.parseDouble(loadValue("NoAutoDisown"));
 
             /* Messages */
             ChunkOwnMessages.permission = loadValue("PermissionMessage");
@@ -193,6 +194,7 @@ public class ChunkOwn extends JavaPlugin {
             ChunkOwnMessages.adminSell = loadValue("AdminSellMessage");
             ChunkOwnMessages.adminSold = loadValue("SoldByAdminMessage");
             ChunkOwnMessages.groupLand = loadValue("MustGroupLandMessage");
+            ChunkOwnMessages.worldGuard = loadValue("WorldGuardMessage");
             ChunkOwnMessages.formatAll();
 
             /* Other */
@@ -998,6 +1000,9 @@ public class ChunkOwn extends JavaPlugin {
 
                 for (String key: lastDaySeen.stringPropertyNames()) {
                     if (Integer.parseInt(lastDaySeen.getProperty(key)) < cutoffDay) {
+                        if (findOwner(key).hasAddOn(AddOn.NOAUTODISOWN)) {
+                            continue;
+                        }
                         logger.info("Clearing Chunks that are owned by " + key);
                         ChunkOwnCommand.clear(key);
                         lastDaySeen.remove(key);

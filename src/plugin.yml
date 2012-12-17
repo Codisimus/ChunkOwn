@@ -38,12 +38,16 @@ permissions:
     description: Needed to buy the Feed Add-on (/buy feed)
   chunkown.addon.notify:
     description: Needed to buy the Notify Add-on (/buy notify)
+  chunkown.addon.noautodisown:
+    description: Needed to buy the NoAutoDisown Add-on (/buy noautodisown)
   chunkown.preview:
     description: Needed to preview the boundaries of Chunks (/chunk preview)
   chunkown.info:
     description: Needed to see who the owner and CoOwners are of the current Chunk (/chunk info)
   chunkown.coowner:
     description: Needed to add a CoOwner to your Chunk (/chunk coowner)
+  chunkown.ninja:
+    description: You will not trigger alarms when stepping on others property
   chunkown.free:
     description: Own Chunks free of charge
   chunkown.admin:

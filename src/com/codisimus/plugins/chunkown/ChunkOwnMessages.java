@@ -18,10 +18,11 @@ public class ChunkOwnMessages {
     public static String adminSell;
     public static String adminSold;
     public static String groupLand;
-    
+    public static String worldGuard;
+
     /**
      * Formats all Turnstile messages
-     * 
+     *
      */
     static void formatAll() {
         permission = format(permission);
@@ -36,11 +37,12 @@ public class ChunkOwnMessages {
         adminSell = format(adminSell);
         adminSold = format(adminSold);
         groupLand = format(groupLand);
+        worldGuard = format(worldGuard);
     }
-    
+
     /**
      * Adds various Unicode characters and colors to a string
-     * 
+     *
      * @param string The string being formated
      * @return The formatted String
      */

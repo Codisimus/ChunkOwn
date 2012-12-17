@@ -9,7 +9,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 
 /**
  * Block Explosions within Owned Chunks which have protection
- * 
+ *
  * @author Codisimus
  */
 public class ChunkOwnExplosionListener implements Listener {

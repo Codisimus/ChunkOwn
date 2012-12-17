@@ -1,6 +1,5 @@
 package com.codisimus.plugins.chunkown;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -15,15 +14,15 @@ import org.bukkit.event.vehicle.VehicleDestroyEvent;
 
 /**
  * Listens for griefing events
- * 
+ *
  * @author Codisimus
  */
 public class ChunkOwnListener implements Listener {
     /* Building/Griefing Events */
-    
+
     /**
      * Blocks can only be placed within an OwnedChunk by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The BlockPlaceEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -32,10 +31,10 @@ public class ChunkOwnListener implements Listener {
             event.setCancelled(true);
         }
     }
-    
+
     /**
      * Blocks within an OwnedChunk can only be broken by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The BlockBreakEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -47,7 +46,7 @@ public class ChunkOwnListener implements Listener {
 
     /**
      * Signs within an OwnedChunk can only be changed by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The SignChangeEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -59,7 +58,7 @@ public class ChunkOwnListener implements Listener {
 
     /**
      * Blocks within an OwnedChunk can only be ignited by the Owner/Co-Owner
-     * 
+     *
      * @param event The BlockIgniteEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -68,10 +67,10 @@ public class ChunkOwnListener implements Listener {
             event.setCancelled(true);
         }
     }
-    
+
     /**
      * Fire cannot spread within an OwnedChunk
-     * 
+     *
      * @param event The BlockSpreadEvent that occurred
      */
     @EventHandler(ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -83,7 +82,7 @@ public class ChunkOwnListener implements Listener {
 
     /**
      * Blocks within an OwnedChunk cannot burn
-     * 
+     *
      * @param event The BlockBurnEvent that occurred
      */
     @EventHandler(ignoreCancelled=true, priority=EventPriority.LOWEST)
@@ -95,7 +94,7 @@ public class ChunkOwnListener implements Listener {
 
     /**
      * Eggs within an OwnedChunk can only be hatched by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The BlockIgniteEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -105,10 +104,10 @@ public class ChunkOwnListener implements Listener {
             event.setHatching(false);
         }
     }
-    
+
     /**
      * Buckets can only be emptied within an OwnedChunk by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The PlayerBucketEmptyEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -120,7 +119,7 @@ public class ChunkOwnListener implements Listener {
 
     /**
      * Buckets can only be filled within an OwnedChunk by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The PlayerBucketFillEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -129,10 +128,10 @@ public class ChunkOwnListener implements Listener {
             event.setCancelled(true);
         }
     }
-    
+
     /**
      * Paintings can only be broken within an OwnedChunk by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The PaintingBreakByEntityEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -142,15 +141,15 @@ public class ChunkOwnListener implements Listener {
         if (entity instanceof Player) {
             player = (Player)entity;
         }
-        
+
         if (!ChunkOwn.canBuild(player, event.getPainting().getLocation().getBlock())) {
             event.setCancelled(true);
         }
     }
-    
+
     /**
      * Vehicles within an OwnedChunk can only be damaged by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The VehicleDamageEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -160,7 +159,7 @@ public class ChunkOwnListener implements Listener {
         if (entity instanceof Player) {
             player = (Player)entity;
         }
-        
+
         if (!ChunkOwn.canBuild(player, event.getVehicle().getLocation().getBlock())) {
             event.setCancelled(true);
         }
@@ -168,7 +167,7 @@ public class ChunkOwnListener implements Listener {
 
     /**
      * Vehicles within an OwnedChunk can only be destroyed by the Owner, a Co-Owner, or an Admin
-     * 
+     *
      * @param event The VehicleDestroyEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
@@ -178,28 +177,28 @@ public class ChunkOwnListener implements Listener {
         if (entity instanceof Player) {
             player = (Player)entity;
         }
-        
+
         if (!ChunkOwn.canBuild(player, event.getVehicle().getLocation().getBlock())) {
             event.setCancelled(true);
         }
     }
-    
-    
+
+
     /* Monitor Events */
-    
+
     /**
      * Removes a preview Block if it is damaged
-     * 
+     *
      * @param event The BlockDamageEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
     public void onBlockDamage(BlockDamageEvent event) {
         ChunkOwnCommand.removeMarker(event.getBlock());
     }
-    
+
     /**
      * Updates the last time that Players that own Chunks were seen
-     * 
+     *
      * @param event The PlayerJoinEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
@@ -209,10 +208,10 @@ public class ChunkOwnListener implements Listener {
         //Ensure that the Player has a ChunkOwner that represents them
         ChunkOwn.getOwner(player);
     }
-    
+
     /**
      * Updates the last time that Players that own Chunks were seen
-     * 
+     *
      * @param event The PlayerQuitEvent that occurred
      */
     @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
@@ -221,10 +220,10 @@ public class ChunkOwnListener implements Listener {
         logAsSeen(player.getName());
         ChunkOwnMovementListener.playerLeftChunk(player);
     }
-    
+
     /**
      * Updates the last time that Players that own Chunks were seen
-     * 
+     *
      * @param player The Name of the Player who was seen
      */
     private void logAsSeen(String player) {
@@ -232,7 +231,7 @@ public class ChunkOwnListener implements Listener {
         if (owner == null) {
             return;
         }
-        
+
         ChunkOwn.lastDaySeen.setProperty(player, String.valueOf(ChunkOwn.getDayAD()));
         ChunkOwn.saveLastSeen();
     }

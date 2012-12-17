@@ -11,17 +11,19 @@ import org.bukkit.entity.Player;
  * @author Codisimus
  */
 public class ChunkOwner {
-    public static enum AddOn { BLOCKPVP, BLOCKPVE, BLOCKEXPLOSIONS, LOCKCHESTS,
-    LOCKDOORS, DISABLEBUTTONS, DISABLEPISTONS, ALARM, HEAL, FEED, NOTIFY }
-    
+    public static enum AddOn {
+        BLOCKPVP, BLOCKPVE, BLOCKEXPLOSIONS, LOCKCHESTS, LOCKDOORS,
+        DISABLEBUTTONS, DISABLEPISTONS, ALARM, HEAL, FEED, NOTIFY,
+        NOAUTODISOWN }
+
     public String name;
     public int chunkCounter = 0;
-    
+
     public LinkedList<String> coOwners = new LinkedList<String>();
     public LinkedList<String> groups = new LinkedList<String>();
-    
+
     public int autoOwnBlock = ChunkOwn.defaultAutoOwnBlock;
-    
+
     public boolean blockPvP = Econ.blockPvP == -1;
     public boolean blockPvE = Econ.blockPvE == -1;
     public boolean blockExplosions = Econ.blockExplosions == -1;
@@ -33,7 +35,8 @@ public class ChunkOwner {
     public boolean alarm = Econ.alarm == -1;
     public boolean heal = Econ.heal == -1;
     public boolean feed = Econ.feed == -1;
-    
+    public boolean noAutoDisown = Econ.noAutoDisown == -1;
+
     /**
      * Constructs a new ChunkOwner to represent the given Player
      *
@@ -42,11 +45,11 @@ public class ChunkOwner {
     public ChunkOwner(String player) {
         name = player;
     }
-    
+
     /**
      * Send the given message to the ChunkOwner
      * If they are offline it will attempt to Text them through TextPlayer
-     * 
+     *
      * @param msg The message to be sent
      */
     public void sendMessage(String msg) {
@@ -58,10 +61,10 @@ public class ChunkOwner {
             user.sendText(msg);
         }
     }
-    
+
     /**
      * Returns true if the ChunkOwner has the given AddOn enabled
-     * 
+     *
      * @param addOn The given AddOn
      * @return True if the ChunkOwner has the given AddOn enabled
      */
@@ -78,13 +81,14 @@ public class ChunkOwner {
         case ALARM: return alarm;
         case HEAL: return heal;
         case FEED: return feed;
+        case NOAUTODISOWN: return noAutoDisown;
         default: return false;
         }
     }
-    
+
     /**
      * Sets the status of the given AddOn
-     * 
+     *
      * @param addOn The given AddOn
      * @param on The new status of the AddOn
      */
@@ -137,19 +141,24 @@ public class ChunkOwner {
 
         case HEAL:
             heal = on;
-            sendMessage("Players "+(on ? "will" : " will not")+" gain health while on your property");
+            sendMessage("Players "+(on ? "will" : "will not")+" gain health while on your property");
             break;
 
         case FEED:
             feed = on;
-            sendMessage("Players "+(on ? "will" : " will not")+" gain food while on your property");
+            sendMessage("Players "+(on ? "will" : "will not")+" gain food while on your property");
+            break;
+
+        case NOAUTODISOWN:
+            noAutoDisown = on;
+            sendMessage("You "+(on ? "will not" : "will")+" lose your claimed land if you become inactive");
             break;
         }
     }
-    
+
     /**
      * Write this ChunkOwner to file
-     * 
+     *
      */
     public void save() {
         ChunkOwn.saveChunkOwner(this);

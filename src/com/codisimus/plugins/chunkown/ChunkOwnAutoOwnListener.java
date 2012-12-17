@@ -9,7 +9,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 
 /**
  * If a specific Block is placed, then the Chunk will be automatically owned
- * 
+ *
  * @author Codisimus
  */
 public class ChunkOwnAutoOwnListener implements Listener {
@@ -20,15 +20,15 @@ public class ChunkOwnAutoOwnListener implements Listener {
         if (!ChunkOwn.enabledInWorld(player.getWorld())) {
             return;
         }
-        
+
         Block block = event.getBlock();
-        
+
         //Return if the Chunk is already Owned
         OwnedChunk chunk = ChunkOwn.findOwnedChunk(block);
         if (chunk != null) {
             return;
         }
-        
+
         ChunkOwner owner = ChunkOwn.findOwner(player.getName());
         if (block.getTypeId() == (owner == null ? ChunkOwn.defaultAutoOwnBlock : owner.autoOwnBlock)) {
             ChunkOwnCommand.buy(player, block.getChunk());
