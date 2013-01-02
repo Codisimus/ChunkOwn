@@ -799,10 +799,8 @@ public class ChunkOwnCommand implements CommandExecutor {
         player.sendMessage("§2/"+command+" list§b List locations of owned Chunks");
         player.sendMessage("§2/"+command+" info§b List Owner and Co-Owners of current Chunk");
         player.sendMessage("§2/"+command+" clear§b Sell all owned Chunks");
-        player.sendMessage("§2/"+command+" coowner [Action] [Type] [Name]§b Co-Owner for current Chunk");
-        player.sendMessage("§2/"+command+" coowner all [Action] [Type] [Name]§b Co-Owner for all Chunks");
-        player.sendMessage("§bAction = 'add' or 'remove'");
-        player.sendMessage("§bType = 'player' or 'group'");
+        player.sendMessage("§2/"+command+" coowner <add|remove> <player|group> <Name>§b Co-Owner for current Chunk");
+        player.sendMessage("§2/"+command+" coowner all <add|remove> <player|group> <Name>§b Co-Owner for all Chunks");
         player.sendMessage("§bName = The group name or the Player's name");
     }
 
@@ -854,7 +852,7 @@ public class ChunkOwnCommand implements CommandExecutor {
             player.sendMessage("§2/"+command+" buy noautodisown§b Keep your land even if you become inactive: "+Econ.format(Econ.getBuyPrice(AddOn.NOAUTODISOWN)));
         }
 
-        player.sendMessage("§2/"+command+" sell [addon]§b Sell an addon for "+Econ.moneyBack+"% of its buy price");
+        player.sendMessage("§2/"+command+" sell <addon>§b Sell an addon for "+Econ.moneyBack+"% of its buy price");
     }
 
     /**
