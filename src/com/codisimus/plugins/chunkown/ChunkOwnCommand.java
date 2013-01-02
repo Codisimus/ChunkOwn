@@ -79,7 +79,9 @@ public class ChunkOwnCommand implements CommandExecutor {
         switch (action) {
         case BUY:
             switch (args.length) {
-            case 1: buy(player); return true;
+            case 1:
+                buy(player);
+                return true;
 
             case 2:
                 try {
@@ -91,10 +93,13 @@ public class ChunkOwnCommand implements CommandExecutor {
 
             default: break;
             }
+            break;
 
         case SELL:
             switch (args.length) {
-            case 1: sell(player); return true;
+            case 1:
+                sell(player);
+                return true;
 
             case 2:
                 try {
@@ -106,10 +111,13 @@ public class ChunkOwnCommand implements CommandExecutor {
 
             default: break;
             }
+            break;
 
         case LIST:
             switch (args.length) {
-            case 1: list(player); return true;
+            case 1:
+                list(player);
+                return true;
 
             case 2:
                 if (args[1].equals("addons")) {
@@ -121,12 +129,17 @@ public class ChunkOwnCommand implements CommandExecutor {
 
             default: break;
             }
+            break;
 
-        case INFO: info(player); return true;
+        case INFO:
+            info(player);
+            return true;
 
         case COOWNER:
             switch (args.length) {
-            case 4: chunkCoowner(player, args[2], args[1], args[3]); return true;
+            case 4:
+                chunkCoowner(player, args[2], args[1], args[3]);
+                return true;
 
             case 5:
                 if (args[1].equals("all")) {
@@ -138,10 +151,15 @@ public class ChunkOwnCommand implements CommandExecutor {
 
             default: break;
             }
+            break;
 
-        case CLEAR: clear(player); return true;
+        case CLEAR:
+            clear(player);
+            return true;
 
-        case PREVIEW: preview(player); return true;
+        case PREVIEW:
+            preview(player);
+            return true;
 
         case HELP:
             if (args.length == 2 && args[1].equals("addons")) {
