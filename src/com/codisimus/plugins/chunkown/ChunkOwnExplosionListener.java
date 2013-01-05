@@ -1,5 +1,6 @@
 package com.codisimus.plugins.chunkown;
 
+import org.bukkit.entity.Creeper;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -16,6 +17,9 @@ public class ChunkOwnExplosionListener implements Listener {
         OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getEntity().getLocation().getChunk());
     	if(chunk != null && chunk.owner.blockExplosions) {
     		event.setCancelled(true);
+    		if(event.getEntity() instanceof Creeper) {
+    			event.getEntity().remove();
+    		}
     	}
     }
 }
