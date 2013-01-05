@@ -1,11 +1,9 @@
 package com.codisimus.plugins.chunkown;
 
-import java.util.Iterator;
-import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.ExplosionPrimeEvent;
 
 /**
  * Block Explosions within Owned Chunks which have protection
@@ -14,13 +12,10 @@ import org.bukkit.event.entity.EntityExplodeEvent;
  */
 public class ChunkOwnExplosionListener implements Listener {
     @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onEntityExplode(EntityExplodeEvent event) {
-        Iterator<Block> itr = event.blockList().iterator();
-        while (itr.hasNext()) {
-            OwnedChunk chunk = ChunkOwn.findOwnedChunk(itr.next());
-            if (chunk != null && chunk.owner.blockExplosions) {
-                itr.remove();
-            }
-        }
+    public void onEntityExplode(ExplosionPrimeEvent event) {
+        OwnedChunk chunk = ChunkOwn.findOwnedChunk(event.getEntity().getLocation().getChunk());
+    	if(chunk != null && chunk.owner.blockExplosions) {
+    		event.setCancelled(true);
+    	}
     }
 }
