@@ -8,6 +8,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
+import org.bukkit.event.hanging.HangingBreakEvent;
+import org.bukkit.event.hanging.HangingBreakEvent.RemoveCause;
 import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
@@ -25,7 +27,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The BlockPlaceEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onBlockPlace(BlockPlaceEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -37,7 +39,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The BlockBreakEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -49,7 +51,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The SignChangeEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onSignChange(SignChangeEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -61,7 +63,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The BlockIgniteEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onBlockIgnite(BlockIgniteEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlock())) {
             event.setCancelled(true);
@@ -73,7 +75,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The BlockSpreadEvent that occurred
      */
-    @EventHandler(ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onBlockSpread(BlockSpreadEvent event) {
         if (event.getSource().getType() == Material.FIRE && !ChunkOwn.canBuild(null, event.getBlock())) {
             event.setCancelled(true);
@@ -85,7 +87,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The BlockBurnEvent that occurred
      */
-    @EventHandler(ignoreCancelled=true, priority=EventPriority.LOWEST)
+    @EventHandler(ignoreCancelled = true, priority=EventPriority.LOWEST)
     public void onBlockBurn(BlockBurnEvent event) {
         if (!ChunkOwn.canBuild(null, event.getBlock())) {
             event.setCancelled(true);
@@ -97,7 +99,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The BlockIgniteEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onEggThrow(PlayerEggThrowEvent event) {
         Player player = event.getPlayer();
         if (!ChunkOwn.canBuild(player, player.getTargetBlock(null, 10))) {
@@ -110,7 +112,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The PlayerBucketEmptyEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked().getRelative(event.getBlockFace()))) {
             event.setCancelled(true);
@@ -122,7 +124,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The PlayerBucketFillEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerBucketFill(PlayerBucketFillEvent event) {
         if (!ChunkOwn.canBuild(event.getPlayer(), event.getBlockClicked())) {
             event.setCancelled(true);
@@ -130,16 +132,28 @@ public class ChunkOwnListener implements Listener {
     }
 
     /**
-     * Paintings can only be broken within an OwnedChunk by the Owner, a Co-Owner, or an Admin
+     * Hangings within an OwnedChunk can only be broken by the Owner, a Co-Owner, or an Admin
      *
-     * @param event The PaintingBreakByEntityEvent that occurred
+     * @param event The HangingBreakEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
-    public void onPaintingBreak(HangingBreakByEntityEvent event) {
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onHangingBreak(HangingBreakEvent event) {
+        if (event.getCause() != RemoveCause.ENTITY) {
+            event.setCancelled(true);
+        }
+    }
+
+    /**
+     * Hangings within an OwnedChunk can only be broken by the Owner, a Co-Owner, or an Admin
+     *
+     * @param event The HangingBreakByEntityEvent that occurred
+     */
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onHangingBreak(HangingBreakByEntityEvent event) {
         Player player = null;
         Entity entity = event.getRemover();
         if (entity instanceof Player) {
-            player = (Player)entity;
+            player = (Player) entity;
         }
 
         if (!ChunkOwn.canBuild(player, event.getEntity().getLocation().getBlock())) {
@@ -152,7 +166,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The VehicleDamageEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onVehicleDamage(VehicleDamageEvent event) {
         Player player = null;
         Entity entity = event.getAttacker();
@@ -170,7 +184,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The VehicleDestroyEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.LOWEST)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onVehicleDestroy(VehicleDestroyEvent event) {
         Player player = null;
         Entity entity = event.getAttacker();
@@ -187,21 +201,11 @@ public class ChunkOwnListener implements Listener {
     /* Monitor Events */
 
     /**
-     * Removes a preview Block if it is damaged
-     *
-     * @param event The BlockDamageEvent that occurred
-     */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
-    public void onBlockDamage(BlockDamageEvent event) {
-        ChunkOwnCommand.removeMarker(event.getBlock());
-    }
-
-    /**
      * Updates the last time that Players that own Chunks were seen
      *
      * @param event The PlayerJoinEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         String player = event.getPlayer().getName();
         logAsSeen(player);
@@ -214,7 +218,7 @@ public class ChunkOwnListener implements Listener {
      *
      * @param event The PlayerQuitEvent that occurred
      */
-    @EventHandler (ignoreCancelled=true, priority = EventPriority.MONITOR)
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         logAsSeen(player.getName());

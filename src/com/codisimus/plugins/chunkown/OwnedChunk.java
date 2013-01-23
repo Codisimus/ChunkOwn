@@ -103,14 +103,14 @@ public class OwnedChunk {
 
     public void save() {
         String coOwnersString = "";
-        for (String string: coOwners) {
-            coOwnersString = coOwnersString+"'"+string;
+        for (String string : coOwners) {
+            coOwnersString += "'" + string;
         }
         coOwnersString = coOwnersString.isEmpty() ? "none" : coOwnersString.substring(1);
 
         String groupsString = "";
-        for (String string: groups) {
-            groupsString = groupsString+"'"+string;
+        for (String string : groups) {
+            groupsString += "'" + string;
         }
         groupsString = groupsString.isEmpty() ? "none" : groupsString.substring(1);
 
@@ -118,7 +118,7 @@ public class OwnedChunk {
             ChunkOwn.savedData.put(world, new Properties());
         }
         Properties p = ChunkOwn.savedData.get(world);
-        p.setProperty(x+"'"+z, owner.name+","+coOwnersString+","+groupsString);
+        p.setProperty(x + "'" + z, owner.name + "," + coOwnersString + "," + groupsString);
 
         ChunkOwn.save(world);
     }
@@ -141,6 +141,6 @@ public class OwnedChunk {
 
     @Override
     public String toString() {
-        return "Chunk @ world="+world+" x="+(x * 16 + 8)+" z="+(z * 16 + 8);
+        return "Chunk @ world=" + world + " x=" + (x * 16 + 8) + " z=" + (z * 16 + 8);
     }
 }

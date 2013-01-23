@@ -15,6 +15,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 /**
  * Loads Plugin and manages Data/Permissions
@@ -31,23 +32,15 @@ public class ChunkOwn extends JavaPlugin {
     static int groupSize;
     static Properties lastDaySeen;
     static Plugin plugin;
+    static BukkitScheduler scheduler;
     static int defaultAutoOwnBlock;
+    static int disownTime;
+    static boolean revertChunks;
+    static LinkedList<World> worlds = new LinkedList<World>();
+    static String dataFolder;
     private static Properties p;
     private static HashMap<String, OwnedChunk> ownedChunks = new HashMap<String, OwnedChunk>();
     private static HashMap<String, ChunkOwner> chunkOwners = new HashMap<String, ChunkOwner>();
-    private static int disownTime;
-    private static boolean revertChunks;
-    private static String dataFolder;
-    private static LinkedList<World> worlds = new LinkedList<World>();
-
-    @Override
-    public void onDisable () {
-        //Remove all preview Blocks
-        logger.info("Removing Corner Marker Blocks...");
-        for (Block block: ChunkOwnCommand.previewBlocks) {
-            block.setTypeId(0);
-        }
-    }
 
     /**
      * Calls methods to load this Plugin when it is enabled
@@ -59,6 +52,7 @@ public class ChunkOwn extends JavaPlugin {
         logger = getLogger();
         pm = server.getPluginManager();
         plugin = this;
+        scheduler = server.getScheduler();
 
         /* Disable this plugin if Vault is not present */
         if (!pm.isPluginEnabled("Vault")) {
@@ -133,6 +127,7 @@ public class ChunkOwn extends JavaPlugin {
 
         /* Schedule repeating tasks */
         scheduleDisowner();
+        ChunkOwnCommand.animateSelections();
         ChunkOwnMovementListener.scheduleHealer();
         ChunkOwnMovementListener.scheduleFeeder();
 
@@ -143,105 +138,6 @@ public class ChunkOwn extends JavaPlugin {
             logger.severe("version.properties file not found within jar");
         }
         logger.info("ChunkOwn "+this.getDescription().getVersion()+" (Build "+version.getProperty("Build")+") is enabled!");
-    }
-
-    /**
-     * Loads settings from the config.properties file
-     *
-     */
-    public static void loadSettings() {
-        FileInputStream fis = null;
-        try {
-            //Copy the file from the jar if it is missing
-            File file = new File(dataFolder+"/config.properties");
-            if (!file.exists()) {
-                plugin.saveResource("config.properties", true);
-            }
-
-            //Load config file
-            p = new Properties();
-            fis = new FileInputStream(file);
-            p.load(fis);
-
-            /* Prices */
-            Econ.buyPrice = Double.parseDouble(loadValue("BuyPrice"));
-            Econ.sellPrice = Double.parseDouble(loadValue("SellPrice"));
-            Econ.buyMultiplier = Double.parseDouble(loadValue("BuyMultiplier"));
-            Econ.sellMultiplier = Double.parseDouble(loadValue("SellMultiplier"));
-            Econ.blockPvP = Double.parseDouble(loadValue("BlockPvP"));
-            Econ.blockPvE = Double.parseDouble(loadValue("BlockPvE"));
-            Econ.blockExplosions = Double.parseDouble(loadValue("BlockExplosions"));
-            Econ.lockChests = Double.parseDouble(loadValue("LockChests"));
-            Econ.lockDoors = Double.parseDouble(loadValue("LockDoors"));
-            Econ.disableButtons = Double.parseDouble(loadValue("DisableButtons"));
-            Econ.disablePistons = Double.parseDouble(loadValue("DisablePistons"));
-            Econ.alarm = Double.parseDouble(loadValue("AlarmSystem"));
-            Econ.heal = Double.parseDouble(loadValue("RegenerateHealth"));
-            Econ.feed = Double.parseDouble(loadValue("RegenerateHunger"));
-            Econ.notify = Double.parseDouble(loadValue("NotifyWhenInOwnedChunk"));
-            Econ.noAutoDisown = Double.parseDouble(loadValue("NoAutoDisown"));
-
-            /* Messages */
-            ChunkOwnMessages.permission = loadValue("PermissionMessage");
-            ChunkOwnMessages.doNotOwn = loadValue("DoNotOwnMessage");
-            ChunkOwnMessages.claimed = loadValue("AlreadyClaimedMessage");
-            ChunkOwnMessages.limit = loadValue("LimitReachedMessage");
-            ChunkOwnMessages.unclaimed = loadValue("UnclaimedMessage");
-            ChunkOwnMessages.buyFree = loadValue("BuyFreeMessage");
-            ChunkOwnMessages.insufficientFunds = loadValue("InsufficientFundsMessage");
-            ChunkOwnMessages.buy = loadValue("BuyMessage");
-            ChunkOwnMessages.sell = loadValue("SellMessage");
-            ChunkOwnMessages.adminSell = loadValue("AdminSellMessage");
-            ChunkOwnMessages.adminSold = loadValue("SoldByAdminMessage");
-            ChunkOwnMessages.groupLand = loadValue("MustGroupLandMessage");
-            ChunkOwnMessages.worldGuard = loadValue("WorldGuardMessage");
-            ChunkOwnMessages.formatAll();
-
-            /* Other */
-            defaultAutoOwnBlock = Integer.parseInt(loadValue("AutoOwnBlock"));
-            groupSize = Integer.parseInt(loadValue("MinimumGroupSize"));
-            lowerLimit = Integer.parseInt(loadValue("OwnLowerLimit"));
-            ChunkOwnCommand.cornerID = Integer.parseInt(loadValue("CornerBlockID"));
-            ChunkOwnCommand.cooldown = Long.parseLong(loadValue("CornerBlockDuration")) * 20;
-            disownTime = Integer.parseInt(loadValue("AutoDisownTimer"));
-            revertChunks = Boolean.parseBoolean(loadValue("RevertChunks"));
-            ChunkOwnMovementListener.rate = Integer.parseInt(loadValue("RegenerateRate"));
-            ChunkOwnCommand.wgSupport = Boolean.parseBoolean(loadValue("WorldGuardSupport"));
-
-            String data = loadValue("EnabledOnlyInWorlds");
-            if (!data.isEmpty()) {
-                for (String string: data.split(", ")) {
-                    World world = server.getWorld(string);
-                    if (world != null) {
-                        worlds.add(world);
-                    }
-                }
-            }
-        } catch (Exception missingProp) {
-            logger.severe("Failed to load config settings. This plugin may not function properly");
-            missingProp.printStackTrace();
-        } finally {
-            try {
-                fis.close();
-            } catch (Exception e) {
-            }
-        }
-    }
-
-    /**
-     * Loads the given key and prints an error message if the key is missing
-     *
-     * @param key The key to be loaded
-     * @return The String value of the loaded key
-     */
-    private static String loadValue(String key) {
-        if (p.containsKey(key)) {
-            return p.getProperty(key);
-        } else {
-            logger.severe("Missing value for "+key);
-            logger.severe("Please regenerate the config.properties file");
-            return null;
-        }
     }
 
     /**
@@ -364,7 +260,7 @@ public class ChunkOwn extends JavaPlugin {
      *
      */
     private static void loadAll() {
-        loadSettings();
+        ChunkOwnConfig.load();
         loadChunkOwners();
 
         for (World world: worlds.isEmpty() ? server.getWorlds() : worlds) {
@@ -425,8 +321,7 @@ public class ChunkOwn extends JavaPlugin {
                 } finally {
                     try {
                         fis.close();
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                     }
                 }
             }
@@ -446,7 +341,7 @@ public class ChunkOwn extends JavaPlugin {
 
         FileInputStream fis = null;
         try {
-            File file = new File(dataFolder+"/OwnedChunks/"+world+".properties");
+            File file = new File(dataFolder + "/OwnedChunks/" + world + ".properties");
             if (!file.exists()) {
                 convertOldData(world);
                 return;
@@ -474,7 +369,7 @@ public class ChunkOwn extends JavaPlugin {
                     ownedChunk.groups = new LinkedList<String>(Arrays.asList(valueData[2].split("'")));
                 }
 
-                ownedChunks.put(world+"'"+ownedChunk.x+"'"+ownedChunk.z, ownedChunk);
+                ownedChunks.put(world + "'" + ownedChunk.x + "'" + ownedChunk.z, ownedChunk);
                 ownedChunk.save();
             }
         } catch (Exception loadFailed) {
@@ -645,25 +540,19 @@ public class ChunkOwn extends JavaPlugin {
             p.setProperty("RegenerateHunger", String.valueOf(owner.feed));
             p.setProperty("NotifyWhenInOwnedChunk", String.valueOf(owner.notify));
 
-            String coOwners = "";
-            if (owner.coOwners.isEmpty()) {
-                coOwners = "none";
-            } else {
-                for (String coOwner: owner.coOwners) {
-                    coOwners = coOwners.concat(coOwner+",");
-                }
+            String coOwnersString = "";
+            for (String string : owner.coOwners) {
+                coOwnersString += "'" + string;
             }
-            p.setProperty("CoOwners", coOwners);
+            coOwnersString = coOwnersString.isEmpty() ? "none" : coOwnersString.substring(1);
+            p.setProperty("CoOwners", coOwnersString);
 
-            String groups = "";
-            if (owner.groups.isEmpty()) {
-                groups = "none";
-            } else {
-                for (String group: owner.groups) {
-                    groups = groups.concat(group+",");
-                }
+            String groupsString = "";
+            for (String string : owner.groups) {
+                groupsString += "'" + string;
             }
-            p.setProperty("Groups", groups);
+            groupsString = groupsString.isEmpty() ? "none" : groupsString.substring(1);
+            p.setProperty("Groups", groupsString);
 
             //Write the ChunkOwner Properties to file
             fos = new FileOutputStream(dataFolder+"/ChunkOwners/"+owner.name+".properties");
@@ -851,12 +740,6 @@ public class ChunkOwn extends JavaPlugin {
         ownedChunk.owner.chunkCounter--;
         ownedChunks.remove(chunkToString(chunk));
         savedData.get(ownedChunk.world).remove(ownedChunk.x + "'" + ownedChunk.z);
-        for (Block block: ChunkOwnCommand.previewBlocks) {
-            OwnedChunk ownedChunk2 = findOwnedChunk(block);
-            if (ownedChunk2 != null && ownedChunk2.equals(ownedChunk)) {
-                ChunkOwnCommand.removeMarker(block);
-            }
-        }
         save(ownedChunk.world);
     }
 

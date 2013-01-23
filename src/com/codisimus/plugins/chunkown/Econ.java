@@ -173,7 +173,7 @@ public class Econ {
     public static double getSellPrice(String player) {
         return ChunkOwn.hasPermission(player, "free")
                 ? 0
-                : sellPrice * Math.pow(sellMultiplier, ChunkOwn.getChunkCounter(player));
+                : sellPrice * Math.pow(sellMultiplier, ChunkOwn.getChunkCounter(player) - 1);
     }
 
     /**

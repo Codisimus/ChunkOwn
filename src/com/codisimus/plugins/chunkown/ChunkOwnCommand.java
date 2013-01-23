@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import org.bukkit.Chunk;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -23,16 +23,10 @@ import org.bukkit.plugin.Plugin;
  */
 public class ChunkOwnCommand implements CommandExecutor {
     public static String command;
-    public static long cooldown;
-    public static int cornerID;
-    static LinkedList<Block> previewBlocks = new LinkedList<Block>();
     public static boolean wgSupport;
+    public static int edgeID;
     private static enum Action { HELP, BUY, SELL, LIST, INFO, COOWNER, CLEAR, PREVIEW, RL }
-    private Map<String, Long> playerLastPreview;
-
-    public ChunkOwnCommand() {
-        playerLastPreview = new HashMap<String, Long>();
-    }
+    private static HashMap<Player, LinkedList<Location>> chunkOutlines = new HashMap<Player, LinkedList<Location>>();
 
     /**
      * Listens for ChunkOwn commands to execute them
@@ -136,21 +130,22 @@ public class ChunkOwnCommand implements CommandExecutor {
             return true;
 
         case COOWNER:
-            switch (args.length) {
-            case 4:
-                chunkCoowner(player, args[2], args[1], args[3]);
-                return true;
+            String coOwner = args[args.length - 1];
+            boolean all = false;
+            boolean add = true;
+            boolean isPlayer = true;
 
-            case 5:
-                if (args[1].equals("all")) {
-                    coowner(player, args[3], args[2], args[4]);
-                } else {
-                    sendHelp(player);
+            for (int i = 1; i < args.length - 1; i++) {
+                if (args[i].equals("all")) {
+                    all = true;
+                } else if (args[i].equals("remove")) {
+                    add = false;
+                } else if (args[i].equals("group")) {
+                    isPlayer = false;
                 }
-                return true;
-
-            default: break;
             }
+
+            coowner(player, all, add, isPlayer, coOwner);
             break;
 
         case CLEAR:
@@ -263,7 +258,7 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         }
 
-        markCorners(chunk, false);
+        previewChunk(player, chunk);
         ChunkOwn.addOwnedChunk(new OwnedChunk(chunk, name));
     }
 
@@ -318,7 +313,8 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         }
 
-        markCorners(chunk, false);
+        previewChunk(player, chunk);
+        markEdges(chunk);
         ChunkOwn.addOwnedChunk(new OwnedChunk(chunk, name));
     }
 
@@ -384,25 +380,13 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         }
 
-        // If not admin, enforce a cooldown period for this command
-        if (!ChunkOwn.hasPermission(player, "admin") && playerLastPreview.containsKey(player.getName())) {
-            long lastPreviewTime = playerLastPreview.get(player.getName());
-            long currentTime = System.currentTimeMillis() / 1000;
-            long delta = currentTime - lastPreviewTime;
-
-            if (delta < cooldown) {
-                player.sendMessage("You must wait " + (cooldown - delta) + " seconds before previewing another chunk.");
-                return;
-            }
-        }
-
         //Retrieve the OwnedChunk that the Player is in
         Chunk chunk = player.getLocation().getBlock().getChunk();
         OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(chunk);
         String name = player.getName();
 
         //Check if another Player already owns the Chunk
-        if (ownedChunk != null && ownedChunk.owner.name.equals(name)) {
+        if (ownedChunk != null && !ownedChunk.isCoOwner(player) && ChunkOwn.hasPermission(player, "admin")) {
             player.sendMessage(ChunkOwnMessages.claimed);
             return;
         }
@@ -428,8 +412,7 @@ public class ChunkOwnCommand implements CommandExecutor {
             }
         }
 
-        markCorners(chunk, true);
-        playerLastPreview.put(player.getName(), System.currentTimeMillis() / 1000);
+        previewChunk(player, chunk);
     }
 
     /**
@@ -583,161 +566,73 @@ public class ChunkOwnCommand implements CommandExecutor {
     }
 
     /**
-     * Manages Co-Ownership of the given Chunk if the Player is the Owner
-     *
-     * @param player The given Player who may be the Owner
-     * @param type The given type: 'player' or 'group'
-     * @param action The given action: 'add' or 'remove'
-     * @param coOwner The given Co-Owner
-     */
-    public static void chunkCoowner(Player player, String type, String action, String coOwner) {
-        //Cancel if the Player does not have permission to use the command
-        if (!ChunkOwn.hasPermission(player, "coowner")) {
-            player.sendMessage(ChunkOwnMessages.permission);
-            return;
-        }
-
-        //Retrieve the OwnedChunk that the Player is in
-        Chunk chunk = player.getLocation().getBlock().getChunk();
-        OwnedChunk ownedChunk = ChunkOwn.findOwnedChunk(chunk);
-
-        //Cancel if the OwnedChunk does not exist
-        if (ownedChunk == null) {
-            player.sendMessage(ChunkOwnMessages.unclaimed);
-            return;
-        }
-
-        //Cancel if the OwnedChunk is owned by someone else
-        if (!ownedChunk.owner.name.equals(player.getName())) {
-            player.sendMessage(ChunkOwnMessages.doNotOwn);
-            return;
-        }
-
-        //Determine the command to execute
-        if (type.equals("player")) {
-            if (action.equals("add")) {
-                //Cancel if the Player is already a Co-Owner
-                if (ownedChunk.coOwners.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a Co-Owner");
-                    return;
-                }
-
-                ownedChunk.coOwners.add(coOwner);
-                player.sendMessage(coOwner+" added as a Co-Owner");
-            } else if (action.equals("remove")) {
-                //Cancel if the Player is not a Co-Owner
-                if (!ownedChunk.coOwners.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is not a Co-Owner");
-                    return;
-                }
-
-                ownedChunk.coOwners.remove(coOwner);
-                player.sendMessage(coOwner+" removed as a Co-Owner");
-            } else {
-                sendHelp(player);
-                return;
-            }
-        } else if (type.equals("group")) {
-            if (action.equals("add")) {
-                //Cancel if the Group is already a CoOwner
-                if (ownedChunk.groups.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a Co-Owner");
-                    return;
-                }
-
-                ownedChunk.groups.add(coOwner);
-                player.sendMessage(coOwner+" added as a Co-Owner");
-            } else if (action.equals("remove")) {
-                //Cancel if the Group is not a Co-Owner
-                if (!ownedChunk.groups.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is not a Co-Owner");
-                    return;
-                }
-
-                ownedChunk.groups.remove(coOwner);
-                player.sendMessage(coOwner+" removed as a Co-Owner");
-            } else {
-                sendHelp(player);
-                return;
-            }
-        } else {
-            sendHelp(player);
-            return;
-        }
-
-        ownedChunk.save();
-    }
-
-    /**
      * Manages Co-Ownership of the ChunkOwner of the Player
      *
      * @param player The given Player who may be the Owner
-     * @param type The given type: 'player' or 'group'
-     * @param action The given action: 'add' or 'remove'
+     * @param type true if co-owner is a Player, false if it is a group
+     * @param add true if adding a co-owner, false if removing
      * @param coOwner The given Co-Owner
      */
-    public static void coowner(Player player, String type, String action, String coOwner) {
+    public static void coowner(Player player, boolean all, boolean add, boolean isPlayer, String coOwner) {
         //Cancel if the Player does not have permission to use the command
         if (!ChunkOwn.hasPermission(player, "coowner")) {
             player.sendMessage(ChunkOwnMessages.permission);
             return;
         }
 
-        ChunkOwner owner = ChunkOwn.getOwner(player.getName());
+        ChunkOwner owner = null;
+        OwnedChunk ownedChunk = null;
+        LinkedList<String> coOwnerList;
 
-        //Determine the command to execute
-        if (type.equals("player")) {
-            if (action.equals("add")) {
-                //Cancel if the Player is already a Co-Owner
-                if (owner.coOwners.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a Co-Owner");
-                    return;
-                }
-
-                owner.coOwners.add(coOwner);
-                player.sendMessage(coOwner+" added as a Co-Owner");
-            } else if (action.equals("remove")) {
-                //Cancel if the Player is not a Co-Owner
-                if (!owner.coOwners.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is not a Co-Owner");
-                    return;
-                }
-
-                owner.coOwners.remove(coOwner);
-                player.sendMessage(coOwner+" removed as a Co-Owner");
-            } else {
-                sendHelp(player);
-                return;
-            }
-        } else if (type.equals("group")) {
-            if (action.equals("add")) {
-                //Cancel if the Group is already a CoOwner
-                if (owner.groups.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is already a Co-Owner");
-                    return;
-                }
-
-                owner.groups.add(coOwner);
-                player.sendMessage(coOwner+" added as a Co-Owner");
-            } else if (action.equals("remove")) {
-                //Cancel if the Group is not a Co-Owner
-                if (!owner.groups.contains(coOwner)) {
-                    player.sendMessage(coOwner+" is not a Co-Owner");
-                    return;
-                }
-
-                owner.groups.remove(coOwner);
-                player.sendMessage(coOwner+" removed as a Co-Owner");
-            } else {
-                sendHelp(player);
-                return;
-            }
+        if (all) {
+            owner = ChunkOwn.getOwner(player.getName());
+            coOwnerList = isPlayer ? owner.coOwners : owner.groups;
         } else {
-            sendHelp(player);
-            return;
+            //Retrieve the OwnedChunk that the Player is in
+            Chunk chunk = player.getLocation().getBlock().getChunk();
+            ownedChunk = ChunkOwn.findOwnedChunk(chunk);
+
+            //Cancel if the OwnedChunk does not exist
+            if (ownedChunk == null) {
+                player.sendMessage(ChunkOwnMessages.unclaimed);
+                return;
+            }
+
+            //Cancel if the OwnedChunk is owned by someone else
+            if (!ownedChunk.owner.name.equals(player.getName())) {
+                player.sendMessage(ChunkOwnMessages.doNotOwn);
+                return;
+            }
+
+            coOwnerList = isPlayer ? ownedChunk.coOwners : ownedChunk.groups;
         }
 
-        owner.save();
+        //Determine the command to execute
+        if (add) {
+            //Cancel if the Player is already a Co-Owner
+            if (coOwnerList.contains(coOwner)) {
+                player.sendMessage(coOwner+" is already a Co-Owner");
+                return;
+            }
+
+            coOwnerList.add(coOwner);
+            player.sendMessage(coOwner+" added as a Co-Owner");
+        } else {
+            //Cancel if the Player is not a Co-Owner
+            if (!coOwnerList.contains(coOwner)) {
+                player.sendMessage(coOwner+" is not a Co-Owner");
+                return;
+            }
+
+            coOwnerList.remove(coOwner);
+            player.sendMessage(coOwner+" removed as a Co-Owner");
+        }
+
+        if (all) {
+            owner.save();
+        } else {
+            ownedChunk.save();
+        }
     }
 
     /**
@@ -799,8 +694,8 @@ public class ChunkOwnCommand implements CommandExecutor {
         player.sendMessage("§2/"+command+" list§b List locations of owned Chunks");
         player.sendMessage("§2/"+command+" info§b List Owner and Co-Owners of current Chunk");
         player.sendMessage("§2/"+command+" clear§b Sell all owned Chunks");
-        player.sendMessage("§2/"+command+" coowner <add|remove> <player|group> <Name>§b Co-Owner for current Chunk");
-        player.sendMessage("§2/"+command+" coowner all <add|remove> <player|group> <Name>§b Co-Owner for all Chunks");
+        player.sendMessage("§2/"+command+" coowner [remove] [group] <Name>§b Co-Owner for current Chunk");
+        player.sendMessage("§2/"+command+" coowner all [remove] [group] <Name>§b Co-Owner for all Chunks");
         player.sendMessage("§bName = The group name or the Player's name");
     }
 
@@ -856,26 +751,59 @@ public class ChunkOwnCommand implements CommandExecutor {
     }
 
     /**
-     * Places Blocks of a predetermined type just above the highest Block at each corner of the given Chunk
+     * Sets the edges of the given Chunk to be animated to the given Player
+     *
+     * @param player The Player to send the smoke animations to
+     * @param chunk The Chunk with the edges to be displayed
+     */
+    public static void previewChunk(final Player player, Chunk chunk) {
+        LinkedList<Location> outline = new LinkedList<Location>();
+        int y = player.getLocation().getBlockY();
+        for (int x = 0; x <= 15; x = x + 15) {
+            for (int z = 0; z <= 15; z++) {
+                outline.add(chunk.getBlock(x, y, z).getLocation());
+            }
+        }
+        for (int x = 0; x <= 15; x++) {
+            for (int z = 0; z <= 15; z = z + 15) {
+                outline.add(chunk.getBlock(x, y, z).getLocation());
+            }
+        }
+        chunkOutlines.put(player, outline);
+        ChunkOwn.scheduler.runTaskLater(ChunkOwn.plugin, new Runnable() {
+                @Override
+                public void run() {
+                    chunkOutlines.remove(player);
+                }
+            }, 1200L);
+    }
+
+    /**
+     * Places Blocks of a predetermined type just above the highest Block at each edge of the given Chunk
      *
      * @param chunk The given Chunk
      */
-    public static void markCorners(Chunk chunk, boolean cooldown) {
-        for (int x = 0; x <= 15; x = x + 15) {
-            for (int z = 0; z <= 15; z = z + 15) {
-                int y = chunk.getWorld().getMaxHeight() - 2;
-                boolean marked = false;
+    public static void markEdges(Chunk chunk) {
+        if (edgeID == -1) {
+            return;
+        }
 
-                Block block = chunk.getBlock(x, y, z);
+        World w = chunk.getWorld();
+        for (int x = 0; x <= 15; x = x + 15) {
+            for (int z = 0; z <= 15; z++) {
+                w.getHighestBlockAt(x, z);
+                int y = w.getHighestBlockYAt(x, z) + 1;
+                boolean next = false;
+
                 while (y >= 0) {
-                    //Do not stack cornerID Blocks
-                    if (block.getTypeId() == cornerID) {
+                    Block block = chunk.getBlock(x, y, z);
+                    if (block.getTypeId() == edgeID) {
                         break;
                     }
 
                     switch (block.getType()) {
                     case LEAVES: //Fall through
-                    case AIR:
+                    case AIR: //Keep going down
                         y--;
                         break;
 
@@ -886,70 +814,68 @@ public class ChunkOwnCommand implements CommandExecutor {
                     case RED_ROSE: //Fall through
                     case BROWN_MUSHROOM: //Fall through
                     case RED_MUSHROOM: //Fall through
-                    case SNOW:
-                        block.setTypeId(cornerID);
-                        marked = true;
-                        break;
-
-                    case BED_BLOCK: //Fall through
-                    case POWERED_RAIL: //Fall through
-                    case DETECTOR_RAIL: //Fall through
-                    case RAILS: //Fall through
-                    case STONE_PLATE: //Fall through
-                    case WOOD_PLATE:
-                        block = block.getRelative(0, 2, 0);
-                        block.setTypeId(cornerID);
-                        marked = true;
+                    case SNOW: //Replace existing Block
+                        block.setTypeId(edgeID);
+                        next = true;
                         break;
 
                     default:
-                        block = block.getRelative(0, 1, 0);
-                        block.setTypeId(cornerID);
-                        marked = true;
+                        if (block.getType().isSolid()) { //Place Block above this block
+                            block.getRelative(0, 1, 0).setTypeId(edgeID);
+                        }
+                        next = true;
                         break;
                     }
 
-                    if (marked) {
+                    if (next) {
                         break;
                     }
-
-                    block = block.getRelative(0, -1, 0);
-                }
-
-                previewBlocks.add(block);
-
-                if (cooldown) {
-                    scheduleCooldown(block);
                 }
             }
         }
-    }
+        for (int x = 0; x <= 15; x++) {
+            for (int z = 0; z <= 15; z = z + 15) {
+                w.getHighestBlockAt(x, z);
+                int y = w.getHighestBlockYAt(x, z) + 1;
+                boolean next = false;
 
-    /**
-     * Schedules the given preview Block to be removed after the cooldown
-     *
-     * @param block The given preview Block
-     */
-    private static void scheduleCooldown(final Block block) {
-        ChunkOwn.server.getScheduler().scheduleSyncDelayedTask(ChunkOwn.plugin, new Runnable() {
-            @Override
-            public void run() {
-                removeMarker(block);
-            }
-        }, cooldown);
-    }
+                while (y >= 0) {
+                    Block block = chunk.getBlock(x, y, z);
+                    if (block.getTypeId() == edgeID) {
+                        break;
+                    }
 
-    /**
-     * Removes the given preview Block
-     *
-     * @param block The given preview Block
-     */
-    public static void removeMarker(Block block) {
-        if (previewBlocks.contains(block)) {
-            if (block.getTypeId() == cornerID) {
-                block.setTypeId(0);
+                    switch (block.getType()) {
+                    case LEAVES: //Fall through
+                    case AIR: //Keep going down
+                        y--;
+                        break;
+
+                    case SAPLING: //Fall through
+                    case LONG_GRASS: //Fall through
+                    case DEAD_BUSH: //Fall through
+                    case YELLOW_FLOWER: //Fall through
+                    case RED_ROSE: //Fall through
+                    case BROWN_MUSHROOM: //Fall through
+                    case RED_MUSHROOM: //Fall through
+                    case SNOW: //Replace existing Block
+                        block.setTypeId(edgeID);
+                        next = true;
+                        break;
+
+                    default:
+                        if (block.getType().isSolid()) { //Place Block above this block
+                            block.getRelative(0, 1, 0).setTypeId(edgeID);
+                        }
+                        next = true;
+                        break;
+                    }
+
+                    if (next) {
+                        break;
+                    }
+                }
             }
-            previewBlocks.remove(block);
         }
     }
 
@@ -986,5 +912,24 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
 
         return true;
+    }
+
+    /**
+     * Creates smoke animations for all Locations
+     */
+    static void animateSelections() {
+        //Repeat every tick
+    	ChunkOwn.scheduler.scheduleSyncRepeatingTask(ChunkOwn.plugin, new Runnable() {
+                @Override
+                public void run() {
+                    for (Player player : chunkOutlines.keySet()) {
+                        World world = player.getWorld();
+                        for (Location location : chunkOutlines.get(player)) {
+                            //Play smoke effect
+                            world.playEffect(location, Effect.SMOKE, 4);
+                        }
+                    }
+                }
+            }, 0L, 1L);
     }
 }
