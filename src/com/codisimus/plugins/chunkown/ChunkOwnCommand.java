@@ -146,7 +146,7 @@ public class ChunkOwnCommand implements CommandExecutor {
             }
 
             coowner(player, all, add, isPlayer, coOwner);
-            break;
+            return true;
 
         case CLEAR:
             clear(player);

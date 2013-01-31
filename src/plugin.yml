@@ -1,6 +1,6 @@
 name: ChunkOwn
 main: com.codisimus.plugins.chunkown.ChunkOwn
-version: 1.0.0
+version: 1.0.1
 author: Codisimus
 website: www.codisimus.com
 description: Simple area protection based on Chunks
@@ -14,6 +14,7 @@ commands:
 permissions:
   chunkown.buy:
     description: Needed to purchase Chunks (/chunk buy)
+    default: true
   chunkown.autobuy:
     description: Needed to buy Chunks by placing a Block
   chunkown.addon.blockpvp:
@@ -42,10 +43,12 @@ permissions:
     description: Needed to buy the NoAutoDisown Add-on (/buy noautodisown)
   chunkown.preview:
     description: Needed to preview the boundaries of Chunks (/chunk preview)
+    default: true
   chunkown.info:
     description: Needed to see who the owner and CoOwners are of the current Chunk (/chunk info)
   chunkown.coowner:
     description: Needed to add a CoOwner to your Chunk (/chunk coowner)
+    default: true
   chunkown.ninja:
     description: You will not trigger alarms when stepping on others property
   chunkown.free:

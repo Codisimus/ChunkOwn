@@ -58,7 +58,9 @@ public class ChunkOwner {
             player.sendMessage(msg);
         } else if (ChunkOwn.pm.isPluginEnabled("TextPlayer")) {
             User user = TextPlayer.findUser(name);
-            user.sendText(msg);
+            if (user != null) {
+                user.sendText("ChunkOwn Security System", msg);
+            }
         }
     }
 
