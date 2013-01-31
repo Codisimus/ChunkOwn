@@ -47,7 +47,7 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         //Cancel if the Player is in a disabled World
         if (!ChunkOwn.enabledInWorld(player.getWorld())) {
-            player.sendMessage("ChunkOwn is disabled in your current World");
+            player.sendMessage("§4ChunkOwn is disabled in your current World");
             return true;
         }
 
@@ -78,7 +78,7 @@ public class ChunkOwnCommand implements CommandExecutor {
                 try {
                     buyAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
                 } catch (IllegalArgumentException notAddOn) {
-                    player.sendMessage(args[1]+" is not a valid Add-on");
+                    player.sendMessage("§6" + args[1] + "§4 is not a valid Add-on");
                 }
                 return true;
 
@@ -96,7 +96,7 @@ public class ChunkOwnCommand implements CommandExecutor {
                 try {
                     sellAddOn(player, AddOn.valueOf(args[1].toUpperCase()));
                 } catch (IllegalArgumentException notAddOn) {
-                    player.sendMessage(args[1]+" is not a valid Add-on");
+                    player.sendMessage("§6" + args[1] + "§4 is not a valid Add-on");
                 }
                 return true;
 
@@ -334,7 +334,7 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         //Cancel if the Player already has the Add-on
         if (owner.hasAddOn(addOn)) {
-            player.sendMessage("You already have that Add-on enabled");
+            player.sendMessage("§4You already have that Add-on enabled");
             return;
         }
 
@@ -358,7 +358,7 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         //Cancel if the Player already has the Add-on
         if (!owner.hasAddOn(addOn)) {
-            player.sendMessage("You already have that Add-on disabled");
+            player.sendMessage("§4You already have that Add-on disabled");
             return;
         }
 
@@ -454,12 +454,12 @@ public class ChunkOwnCommand implements CommandExecutor {
      */
     public static void list(Player player) {
         String name = player.getName();
-        player.sendMessage("Number of Chunks owned: "+ChunkOwn.getChunkCounter(name));
+        player.sendMessage("§3Number of Chunks owned: §6" + ChunkOwn.getChunkCounter(name));
 
         //Retrieve the ownLimit to display to the Player
         int ownLimit = ChunkOwn.getOwnLimit(player);
         if (ownLimit > -1) {
-            player.sendMessage("Total amount you may own: "+ownLimit);
+            player.sendMessage("§3Total amount you may own: §6" + ownLimit);
         }
 
         for (OwnedChunk ownedChunk: ChunkOwn.getOwnedChunks()) {
@@ -477,49 +477,49 @@ public class ChunkOwnCommand implements CommandExecutor {
     public static void listAddOns(Player player) {
         ChunkOwner owner = ChunkOwn.getOwner(player.getName());
 
-        String list = "Enabled Add-ons: ";
+        String list = "§3Enabled Add-ons: ";
         if (Econ.blockPvP != -2 && owner.blockPvP) {
-            list = list.concat("BlockPvP, ");
+            list = list.concat("§6BlockPvP§0, ");
         }
         if (Econ.blockPvE != -2 && owner.blockPvE) {
-            list = list.concat("BlockPvE, ");
+            list = list.concat("§6BlockPvE§0, ");
         }
         if (Econ.blockExplosions != -2 && owner.blockExplosions) {
-            list = list.concat("BlockExplosions, ");
+            list = list.concat("§6BlockExplosions§0, ");
         }
         if (Econ.lockChests != -2 && owner.lockChests) {
-            list = list.concat("LockChests, ");
+            list = list.concat("§6LockChests§0, ");
         }
         if (Econ.lockDoors != -2 && owner.lockDoors) {
-            list = list.concat("LockDoors, ");
+            list = list.concat("§6LockDoors§0, ");
         }
         if (Econ.disableButtons != -2 && owner.disableButtons) {
-            list = list.concat("DisableButtons, ");
+            list = list.concat("§6DisableButtons§0, ");
         }
         if (Econ.disablePistons != -2 && owner.disablePistons) {
-            list = list.concat("DisablePistons, ");
+            list = list.concat("§6DisablePistons§0, ");
         }
         if (Econ.alarm != -2 && owner.alarm) {
-            list = list.concat("AlarmSystem, ");
+            list = list.concat("§6AlarmSystem§0, ");
         }
         if (Econ.heal != -2 && owner.heal) {
-            list = list.concat("Heal, ");
+            list = list.concat("§6Heal§0, ");
         }
         if (Econ.feed != -2 && owner.feed) {
-            list = list.concat("Feed, ");
+            list = list.concat("§6Feed§0, ");
         }
         if (Econ.notify != -2 && owner.notify) {
-            list = list.concat("Notify, ");
+            list = list.concat("§6Notify§0, ");
         }
         if (Econ.notify != -2 && owner.notify) {
-            list = list.concat("NoAutoDisown, ");
+            list = list.concat("§6NoAutoDisown§0, ");
         }
 
-        player.sendMessage(list.substring(0, list.length()-2));
+        player.sendMessage(list.substring(0, list.length() - 2));
 
         if (ChunkOwn.defaultAutoOwnBlock != -1) {
             Material material = Material.getMaterial(owner.autoOwnBlock);
-            player.sendMessage("You will automattically buy a Chunk if you place a "+material.toString()+" in it");
+            player.sendMessage("§3You will automattically buy a Chunk if you place a §6" + material.toString() + "§3 in it");
         }
     }
 
@@ -529,20 +529,20 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         }
 
-        player.sendMessage("Co-owners of all Chunks:");
+        player.sendMessage("§3Co-owners of all Chunks:");
 
         Properties list = new Properties();
         for (OwnedChunk chunk : ChunkOwn.getOwnedChunks()) {
-            String location = chunk.world + "'" + (chunk.x * 16 + 8) + "'" + (chunk.z * 16 + 8);
+            String location = "§6" + chunk.world + "'" + (chunk.x * 16 + 8) + "'" + (chunk.z * 16 + 8);
             for (String coOwner : chunk.coOwners) {
                 list.setProperty(coOwner, list.containsKey(coOwner)
-                                          ? list.getProperty(coOwner) + ", " + location
+                                          ? list.getProperty(coOwner) + "§0, " + location
                                           : location);
             }
         }
 
         for (String coOwner : list.stringPropertyNames()) {
-            player.sendMessage(coOwner + ':' + list.getProperty(coOwner));
+            player.sendMessage("§3" + coOwner + "§0:" + list.getProperty(coOwner));
         }
     }
 
@@ -570,21 +570,22 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
 
         //Display the world and x/y-coordinates of the center of the OwnedChunk to the Player
-        player.sendMessage(ownedChunk.toString()+" belongs to "+ownedChunk.owner.name);
+        player.sendMessage("§6" + ownedChunk.toString()+"§3 belongs to §6"+ownedChunk.owner.name);
 
         //Display CoOwners of OwnedChunk to Player
-        String coOwners = "CoOwners:  ";
+        String coOwners = "§3Co-owners:  ";
         for (String coOwner: ownedChunk.coOwners) {
             coOwners = coOwners.concat(coOwner.concat(", "));
         }
         player.sendMessage(coOwners.substring(0, coOwners.length() - 2));
 
         //Display CoOwner Groups of OwnedChunk to Player
-        String groups = "CoOwner Groups:  ";
+        String groups = "§3Co-owner Groups:  ";
         for (String group: ownedChunk.groups) {
-            groups = groups.concat(group.concat(", "));
+            groups += "§6" + group + "§0, ";
+
         }
-        player.sendMessage(groups.substring(0, groups.length() - 2));
+        player.sendMessage(groups.substring(0, groups.length() - 4));
     }
 
     /**
@@ -631,23 +632,23 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         //Determine the command to execute
         if (add) {
-            //Cancel if the Player is already a Co-Owner
+            //Cancel if the Player is already a Co-owner
             if (coOwnerList.contains(coOwner)) {
-                player.sendMessage(coOwner+" is already a Co-Owner");
+                player.sendMessage("§6" + coOwner + "§4 is already a Co-owner");
                 return;
             }
 
             coOwnerList.add(coOwner);
-            player.sendMessage(coOwner+" added as a Co-Owner");
+            player.sendMessage("§6" + coOwner + "§5 added as a Co-owner");
         } else {
-            //Cancel if the Player is not a Co-Owner
+            //Cancel if the Player is not a Co-owner
             if (!coOwnerList.contains(coOwner)) {
-                player.sendMessage(coOwner+" is not a Co-Owner");
+                player.sendMessage("§6" + coOwner + "§4 is not a Co-owner");
                 return;
             }
 
             coOwnerList.remove(coOwner);
-            player.sendMessage(coOwner+" removed as a Co-Owner");
+            player.sendMessage("§6" + coOwner + "§5 removed as a Co-owner");
         }
 
         if (all) {

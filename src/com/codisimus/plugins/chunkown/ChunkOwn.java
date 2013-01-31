@@ -485,7 +485,7 @@ public class ChunkOwn extends JavaPlugin {
 
         logger.info("reloaded");
         if (player != null) {
-            player.sendMessage("ChunkOwn reloaded");
+            player.sendMessage("§5ChunkOwn reloaded");
         }
     }
 

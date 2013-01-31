@@ -47,12 +47,12 @@ public class ChunkOwnMovementListener implements Listener {
         }
 
         if (owner.alarm && !owner.name.equals(name) && !ChunkOwn.hasPermission(player, "ninja")) {
-            owner.sendMessage(name+" left your owned property");
+            owner.sendMessage(name + " left your owned property");
         }
 
         ChunkOwner walker = ChunkOwn.getOwner(name);
         if (walker.notify) {
-            walker.sendMessage("You have left property owned by "+owner.name);
+            walker.sendMessage("You have left property owned by " + owner.name);
         }
 
         healing.remove(player);
@@ -64,12 +64,12 @@ public class ChunkOwnMovementListener implements Listener {
         String name = player.getName();
 
         if (chunk.owner.alarm && !chunk.owner.name.equals(name) && !ChunkOwn.hasPermission(player, "ninja")) {
-            chunk.owner.sendMessage(name+" entered your owned property: "+chunk.toString());
+            chunk.owner.sendMessage(name + " entered your owned property: " + chunk.toString());
         }
 
         ChunkOwner walker = ChunkOwn.getOwner(name);
         if (walker.notify) {
-            walker.sendMessage("You have entered property owned by "+chunk.owner.name);
+            walker.sendMessage("You have entered property owned by " + chunk.owner.name);
         }
 
         if (chunk.owner.heal) {
