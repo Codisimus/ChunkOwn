@@ -3,10 +3,7 @@ package com.codisimus.plugins.chunkown;
 import com.codisimus.plugins.chunkown.ChunkOwner.AddOn;
 import com.palmergames.bukkit.towny.Towny;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -116,6 +113,8 @@ public class ChunkOwnCommand implements CommandExecutor {
             case 2:
                 if (args[1].equals("addons")) {
                     listAddOns(player);
+                } else if (args[1].equals("coowners")) {
+                    listCoOwners(player);
                 } else {
                     sendAddOnHelp(player);
                 }
@@ -524,6 +523,29 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
     }
 
+    public void listCoOwners(Player player) {
+        if (!ChunkOwn.hasPermission(player, "admin")) {
+            player.sendMessage(ChunkOwnMessages.permission);
+            return;
+        }
+
+        player.sendMessage("Co-owners of all Chunks:");
+
+        Properties list = new Properties();
+        for (OwnedChunk chunk : ChunkOwn.getOwnedChunks()) {
+            String location = chunk.world + "'" + (chunk.x * 16 + 8) + "'" + (chunk.z * 16 + 8);
+            for (String coOwner : chunk.coOwners) {
+                list.setProperty(coOwner, list.containsKey(coOwner)
+                                          ? list.getProperty(coOwner) + ", " + location
+                                          : location);
+            }
+        }
+
+        for (String coOwner : list.stringPropertyNames()) {
+            player.sendMessage(coOwner + ':' + list.getProperty(coOwner));
+        }
+    }
+
     /**
      * Display to the Player the info of the current Chunk
      * Info displayed is the Location of the Chunk and the current CoOwners
@@ -688,14 +710,25 @@ public class ChunkOwnCommand implements CommandExecutor {
     public static void sendHelp(Player player) {
         player.sendMessage("§e     ChunkOwn Help Page:");
         player.sendMessage("§2/"+command+" help addons§b Display the Add-on Help Page");
-        player.sendMessage("§2/"+command+" buy§b Purchase the current chunk: "+Econ.format(Econ.getBuyPrice(player.getName())));
-        player.sendMessage("§2/"+command+" sell§b Sell the current chunk: "+Econ.format(Econ.getSellPrice(player.getName())));
-        player.sendMessage("§2/"+command+" preview§b Preview the current chunk's boundaries");
+        if (ChunkOwn.hasPermission(player, "buy")) {
+            player.sendMessage("§2/"+command+" buy§b Purchase the current chunk: "+Econ.format(Econ.getBuyPrice(player.getName())));
+            player.sendMessage("§2/"+command+" sell§b Sell the current chunk: "+Econ.format(Econ.getSellPrice(player.getName())));
+        }
+        if (ChunkOwn.hasPermission(player, "preview")) {
+            player.sendMessage("§2/"+command+" preview§b Preview the current chunk's boundaries");
+        }
         player.sendMessage("§2/"+command+" list§b List locations of owned Chunks");
-        player.sendMessage("§2/"+command+" info§b List Owner and Co-Owners of current Chunk");
+        if (ChunkOwn.hasPermission(player, "admin")) {
+            player.sendMessage("§2/"+command+" list coowners§b List Co-owners for all Chunks");
+        }
+        if (ChunkOwn.hasPermission(player, "info")) {
+            player.sendMessage("§2/"+command+" info§b List Owner and Co-Owners of current Chunk");
+        }
         player.sendMessage("§2/"+command+" clear§b Sell all owned Chunks");
-        player.sendMessage("§2/"+command+" coowner [remove] [group] <Name>§b Co-Owner for current Chunk");
-        player.sendMessage("§2/"+command+" coowner all [remove] [group] <Name>§b Co-Owner for all Chunks");
+        if (ChunkOwn.hasPermission(player, "coowner")) {
+            player.sendMessage("§2/"+command+" coowner [remove] [group] <Name>§b Co-Owner for current Chunk");
+            player.sendMessage("§2/"+command+" coowner all [remove] [group] <Name>§b Co-Owner for all Chunks");
+        }
         player.sendMessage("§bName = The group name or the Player's name");
     }
 
