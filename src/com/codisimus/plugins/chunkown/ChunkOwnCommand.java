@@ -766,6 +766,7 @@ public class ChunkOwnCommand implements CommandExecutor {
         player.sendMessage("§2/"+command+" list§b List locations of owned Chunks");
         if (ChunkOwn.hasPermission(player, "admin")) {
             player.sendMessage("§2/"+command+" list allcoowners§b List Co-owners for all Chunks");
+        player.sendMessage("§2/"+command+" clear <player>§b Sell all Chunks by the Player");
         }
         if (ChunkOwn.hasPermission(player, "info")) {
             player.sendMessage("§2/"+command+" info§b List Owner and Co-Owners of current Chunk");
