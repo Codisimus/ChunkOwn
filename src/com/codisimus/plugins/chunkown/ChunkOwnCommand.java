@@ -148,8 +148,23 @@ public class ChunkOwnCommand implements CommandExecutor {
             return true;
 
         case CLEAR:
-            clear(player);
-            return true;
+            switch (args.length) {
+            case 1:
+                clear(player);
+                return true;
+
+            case 2:
+                if (!ChunkOwn.hasPermission(player, "admin")) {
+                    player.sendMessage(ChunkOwnMessages.permission);
+                } else {
+                    clear(args[1]);
+                    player.sendMessage("You have sold all chunks owned by " + args[1]);
+                }
+                return true;
+
+            default: break;
+            }
+            break;
 
         case PREVIEW:
             preview(player);
@@ -692,8 +707,7 @@ public class ChunkOwnCommand implements CommandExecutor {
             if (ownedChunk.owner.name.equals(name)) {
                 if (player == null) {
                     Econ.sell(name);
-                }
-                else {
+                } else {
                     Econ.sell(player);
                 }
 

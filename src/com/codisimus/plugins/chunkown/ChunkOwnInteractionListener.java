@@ -31,7 +31,7 @@ public class ChunkOwnInteractionListener implements Listener {
             return;
         }
 
-        //Return if the player is an Owner/Co-Owner
+        //Return if the player is an Owner/Co-owner
         Player player = event.getPlayer();
         if (chunk.owner.name.equals(player.getName()) || chunk.isCoOwner(player)
                 || ChunkOwn.hasPermission(player, "admin")) {
