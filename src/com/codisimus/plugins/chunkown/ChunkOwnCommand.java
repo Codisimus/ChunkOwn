@@ -113,6 +113,8 @@ public class ChunkOwnCommand implements CommandExecutor {
             case 2:
                 if (args[1].equals("addons")) {
                     listAddOns(player);
+                } else if (args[1].equals("allcoowners")) {
+                    listAllCoOwners(player);
                 } else if (args[1].equals("coowners")) {
                     listCoOwners(player);
                 } else {
@@ -542,7 +544,7 @@ public class ChunkOwnCommand implements CommandExecutor {
         }
     }
 
-    public void listCoOwners(Player player) {
+    public void listAllCoOwners(Player player) {
         if (!ChunkOwn.hasPermission(player, "admin")) {
             player.sendMessage(ChunkOwnMessages.permission);
             return;
@@ -562,6 +564,31 @@ public class ChunkOwnCommand implements CommandExecutor {
 
         for (String coOwner : list.stringPropertyNames()) {
             player.sendMessage("§3" + coOwner + "§0:" + list.getProperty(coOwner));
+        }
+    }
+
+    public void listCoOwners(Player player) {
+        player.sendMessage("§3Co-owners of your Chunks:");
+        String playerName = player.getName();
+
+        for (String coOwner : ChunkOwn.getOwner(playerName).coOwners) {
+            player.sendMessage("§3" + coOwner + "§0: " + "§6all");
+        }
+
+        Properties list = new Properties();
+        for (OwnedChunk chunk : ChunkOwn.getOwnedChunks()) {
+            if (chunk.owner.name.equals(playerName)) {
+                String location = "§6" + chunk.world + "'" + (chunk.x * 16 + 8) + "'" + (chunk.z * 16 + 8);
+                for (String coOwner : chunk.coOwners) {
+                    list.setProperty(coOwner, list.containsKey(coOwner)
+                                              ? list.getProperty(coOwner) + "§0, " + location
+                                              : location);
+                }
+            }
+        }
+
+        for (String coOwner : list.stringPropertyNames()) {
+            player.sendMessage("§3" + coOwner + "§0: " + list.getProperty(coOwner));
         }
     }
 
