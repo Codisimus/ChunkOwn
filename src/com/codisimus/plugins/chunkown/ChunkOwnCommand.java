@@ -327,8 +327,12 @@ public class ChunkOwnCommand implements CommandExecutor {
             return;
         }
 
-        previewChunk(player, chunk);
-        markEdges(chunk);
+        if (edgeID == -1) {
+            previewChunk(player, chunk);
+        } else {
+            chunkOutlines.remove(player);
+            markEdges(chunk);
+        }
         ChunkOwn.addOwnedChunk(new OwnedChunk(chunk, name));
     }
 
@@ -832,10 +836,6 @@ public class ChunkOwnCommand implements CommandExecutor {
      * @param chunk The given Chunk
      */
     public static void markEdges(Chunk chunk) {
-        if (edgeID == -1) {
-            return;
-        }
-
         World w = chunk.getWorld();
         for (int x = 0; x <= 15; x = x + 15) {
             for (int z = 0; z <= 15; z++) {
